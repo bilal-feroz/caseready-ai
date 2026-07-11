@@ -1,0 +1,466 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+    <title>Case CR-1051 — Total Knee Replacement | CaseReady AI</title>
+    <meta name="description" content="Case readiness detail for CR-1051 Total Knee Replacement. View checklist, evidence, timeline, and documents." />
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet" />
+    <link href="shared.css" rel="stylesheet" />
+    <script>
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "on-primary-container":"#d380be","surface":"#f7f9ff","surface-variant":"#d9e4f0",
+                        "inverse-primary":"#fface8","inverse-on-surface":"#e7f2fe","on-surface":"#131d25",
+                        "surface-container-lowest":"#ffffff","outline":"#82737c","secondary-fixed-dim":"#e5c281",
+                        "secondary":"#755a24","surface-dim":"#d1dbe7","on-primary-fixed":"#3a0032",
+                        "surface-container":"#e5effb","surface-tint":"#8d447d","primary-container":"#5a174f",
+                        "tertiary":"#002320","surface-container-low":"#ecf4ff","on-tertiary-fixed":"#00201e",
+                        "on-error":"#ffffff","primary-fixed-dim":"#fface8","on-secondary-fixed":"#271900",
+                        "tertiary-fixed":"#9af2ea","surface-container-high":"#dfe9f6","background":"#f7f9ff",
+                        "primary-fixed":"#ffd7f0","on-secondary-container":"#785d27",
+                        "on-primary-fixed-variant":"#712c64","tertiary-fixed-dim":"#7ed5ce",
+                        "on-background":"#131d25","on-tertiary-container":"#51a9a2","outline-variant":"#d4c1cc",
+                        "on-tertiary":"#ffffff","secondary-fixed":"#ffdea5","surface-bright":"#f7f9ff",
+                        "inverse-surface":"#27313b","error-container":"#ffdad6","on-surface-variant":"#50434b",
+                        "on-tertiary-fixed-variant":"#00504c","on-secondary-fixed-variant":"#5b430e",
+                        "secondary-container":"#fdd896","error":"#ba1a1a","surface-container-highest":"#d9e4f0",
+                        "on-primary":"#ffffff","primary":"#3f0037","on-error-container":"#93000a",
+                        "on-secondary":"#ffffff","tertiary-container":"#003a37"
+                    },
+                    borderRadius: { DEFAULT:"0.25rem", lg:"0.5rem", xl:"0.75rem", full:"9999px" },
+                    spacing: {
+                        command_bar_height:"68px", grid_gutter:"24px", unit:"8px",
+                        container_padding:"24px", stack_sm:"8px", stack_md:"16px", stack_lg:"24px",
+                        nav_rail_width:"232px"
+                    },
+                    fontFamily: {
+                        "display-lg":["IBM Plex Sans","sans-serif"],"headline-md":["IBM Plex Sans","sans-serif"],
+                        "headline-sm":["IBM Plex Sans","sans-serif"],"title-md":["IBM Plex Sans","sans-serif"],
+                        "body-md":["IBM Plex Sans","sans-serif"],"caption":["IBM Plex Sans","sans-serif"],
+                        "body-lg":["IBM Plex Sans","sans-serif"],"label-md":["IBM Plex Sans","sans-serif"]
+                    },
+                    fontSize: {
+                        "display-lg":["32px",{lineHeight:"40px",letterSpacing:"-0.02em",fontWeight:"600"}],
+                        "headline-md":["24px",{lineHeight:"32px",letterSpacing:"-0.01em",fontWeight:"600"}],
+                        "headline-sm":["20px",{lineHeight:"28px",fontWeight:"600"}],
+                        "title-md":["16px",{lineHeight:"24px",fontWeight:"500"}],
+                        "body-md":["14px",{lineHeight:"20px",fontWeight:"400"}],
+                        "caption":["12px",{lineHeight:"16px",fontWeight:"400"}],
+                        "body-lg":["16px",{lineHeight:"24px",fontWeight:"400"}],
+                        "label-md":["12px",{lineHeight:"16px",letterSpacing:"0.05em",fontWeight:"600"}]
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+<body class="flex h-screen overflow-hidden antialiased font-body-md text-body-md">
+
+<!-- ========== Side Navigation ========== -->
+<nav id="side-nav" class="bg-surface w-[232px] h-screen fixed left-0 top-0 border-r border-outline-variant flex flex-col py-stack_lg z-20">
+    <div class="px-stack_lg mb-stack_lg">
+        <h1 class="font-display-lg text-display-lg font-bold text-primary truncate">CaseReady AI</h1>
+        <p class="font-caption text-caption text-on-surface-variant mt-1 truncate">Burjeel Hospital, Abu Dhabi</p>
+    </div>
+    <button class="mx-stack_lg mb-stack_lg bg-primary text-on-primary font-label-md text-label-md h-10 rounded flex items-center justify-center gap-2 hover:opacity-90 transition-opacity">
+        <span class="material-symbols-outlined text-[18px]">add</span>
+        New Case Request
+    </button>
+    <div class="flex-1 overflow-y-auto px-stack_sm">
+        <ul class="space-y-1">
+            <li><a data-nav="Command Centre" class="flex items-center gap-3 px-3 py-2 rounded-lg transition-colors" href="index.html">
+                <span class="material-symbols-outlined">dashboard</span> Command Centre
+            </a></li>
+            <li><a data-nav="Surgical Cases" class="flex items-center gap-3 px-3 py-2 rounded-lg text-on-surface-variant hover:bg-surface-container-high transition-colors" href="#">
+                <span class="material-symbols-outlined">clinical_notes</span> Surgical Cases
+            </a></li>
+            <li><a data-nav="Action Centre" class="flex items-center gap-3 px-3 py-2 rounded-lg text-on-surface-variant hover:bg-surface-container-high transition-colors" href="action-centre.html">
+                <span class="material-symbols-outlined">pending_actions</span> Action Centre
+            </a></li>
+            <li><a data-nav="Slot Rescue" class="flex items-center gap-3 px-3 py-2 rounded-lg text-on-surface-variant hover:bg-surface-container-high transition-colors" href="slot-rescue.html">
+                <span class="material-symbols-outlined">published_with_changes</span> Slot Rescue
+            </a></li>
+            <li><a data-nav="Audit Trail" class="flex items-center gap-3 px-3 py-2 rounded-lg text-on-surface-variant hover:bg-surface-container-high transition-colors" href="audit-trail.html">
+                <span class="material-symbols-outlined">history</span> Audit Trail
+            </a></li>
+            <li><a data-nav="Analytics" class="flex items-center gap-3 px-3 py-2 rounded-lg text-on-surface-variant hover:bg-surface-container-high transition-colors" href="#">
+                <span class="material-symbols-outlined">analytics</span> Analytics
+            </a></li>
+            <li><a data-nav="Settings" class="flex items-center gap-3 px-3 py-2 rounded-lg text-on-surface-variant hover:bg-surface-container-high transition-colors" href="#">
+                <span class="material-symbols-outlined">settings</span> Settings
+            </a></li>
+        </ul>
+    </div>
+    <div class="mt-auto px-stack_sm pt-stack_lg">
+        <ul class="space-y-1 border-t border-outline-variant pt-2">
+            <li><a class="flex items-center gap-3 px-3 py-2 rounded-lg text-on-surface-variant hover:bg-surface-container-high transition-colors" href="#"><span class="material-symbols-outlined">help</span> Help</a></li>
+            <li><a class="flex items-center gap-3 px-3 py-2 rounded-lg text-on-surface-variant hover:bg-surface-container-high transition-colors" href="#"><span class="material-symbols-outlined">contact_support</span> Support</a></li>
+        </ul>
+        <div class="flex items-center gap-3 px-3 py-3 mt-2">
+            <img alt="Aisha Rahman" class="w-8 h-8 rounded-full object-cover border border-outline-variant" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCxJp31iG-UpviuJXaCshpDBamdxUYCHYjQkElhzHn4fEGBFZBObfaliHE603njKDA5aerF1wyInDIQxc2CeMlnPq045GKrF6JNgyTuu_dHjJHIeMsWlKX0ptr-crIcU8d_IV-cfle8Mpw7mo5BVuiDltYuiWuxuZHKacTfPusMm3FQNVrzeimBoF2z1YvzsHItEJWvMBT5LFLJo1AL1Opxa-aw98TNtCtIS20dGzcwpdY14S441lU3" />
+            <div class="flex-1 min-w-0">
+                <p class="font-title-md text-title-md text-on-surface truncate">Aisha Rahman</p>
+            </div>
+        </div>
+    </div>
+</nav>
+
+<!-- ========== Main Content Area ========== -->
+<div class="flex-1 flex flex-col ml-[232px] w-[calc(100%-232px)]">
+
+    <!-- Top Nav Bar -->
+    <header class="bg-surface-container-low h-[68px] fixed top-0 right-0 w-[calc(100%-232px)] border-b border-outline-variant flex justify-between items-center px-container_padding z-10">
+        <div class="flex items-center gap-stack_lg">
+            <nav class="flex gap-stack_md font-label-md text-label-md">
+                <a class="text-on-surface-variant hover:text-primary transition-all py-2" href="#">Cases</a>
+                <a class="text-on-surface-variant hover:text-primary transition-all py-2" href="#">Metrics</a>
+                <a class="text-on-surface-variant hover:text-primary transition-all py-2" href="#">Inventory</a>
+            </nav>
+        </div>
+        <div class="flex items-center gap-stack_md">
+            <span class="font-label-md text-label-md text-on-surface-variant flex items-center gap-2">
+                <span class="w-2 h-2 rounded-full bg-tertiary-fixed pulse-dot"></span>
+                System Status: Active
+            </span>
+            <div class="flex items-center gap-2 border-l border-outline-variant pl-stack_md ml-2">
+                <button class="p-2 text-on-surface-variant hover:bg-surface-container-high rounded-full transition-colors"><span class="material-symbols-outlined">notifications</span></button>
+                <button class="p-2 text-on-surface-variant hover:bg-surface-container-high rounded-full transition-colors"><span class="material-symbols-outlined">help</span></button>
+                <button class="p-2 text-on-surface-variant hover:bg-surface-container-high rounded-full transition-colors"><span class="material-symbols-outlined">language</span></button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Canvas -->
+    <main class="flex-1 overflow-y-auto mt-[68px] bg-background">
+
+        <!-- Breadcrumbs & Header -->
+        <div class="px-container_padding pt-stack_lg pb-stack_md flex items-center justify-between">
+            <div>
+                <div class="flex items-center gap-2 font-body-md text-body-md text-on-surface-variant mb-2">
+                    <a class="hover:underline" href="index.html">Command Centre</a>
+                    <span class="material-symbols-outlined text-[16px]">chevron_right</span>
+                    <span class="text-on-surface font-medium">CR-1051</span>
+                    <span class="ml-3 px-2 py-0.5 rounded text-[10px] font-bold tracking-wider uppercase bg-surface-variant text-on-surface-variant border border-outline-variant">Synthetic Data</span>
+                </div>
+                <h2 class="font-headline-md text-headline-md text-on-surface">Total Knee Replacement</h2>
+            </div>
+        </div>
+
+        <!-- Case Details Card -->
+        <div class="px-container_padding pb-stack_lg">
+            <div class="bg-surface-container-lowest border border-outline-variant rounded-lg p-stack_lg flex flex-wrap lg:flex-nowrap justify-between items-start lg:items-center gap-stack_lg shadow-sm">
+                <div class="flex gap-stack_lg flex-wrap">
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 rounded-full bg-surface-container flex items-center justify-center text-primary">
+                            <span class="material-symbols-outlined">calendar_today</span>
+                        </div>
+                        <div>
+                            <p class="font-caption text-caption text-on-surface-variant">Scheduled</p>
+                            <p class="font-title-md text-title-md text-on-surface">Mon, 13 July</p>
+                        </div>
+                    </div>
+                    <div class="w-px h-10 bg-outline-variant hidden md:block"></div>
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 rounded-full bg-surface-container flex items-center justify-center text-primary">
+                            <span class="material-symbols-outlined">meeting_room</span>
+                        </div>
+                        <div>
+                            <p class="font-caption text-caption text-on-surface-variant">Location</p>
+                            <p class="font-title-md text-title-md text-on-surface">OR 02</p>
+                        </div>
+                    </div>
+                    <div class="w-px h-10 bg-outline-variant hidden md:block"></div>
+                    <div class="flex items-center gap-3">
+                        <img alt="Dr. Leila Hassan" class="w-10 h-10 rounded-full object-cover border border-outline-variant" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCxJp31iG-UpviuJXaCshpDBamdxUYCHYjQkElhzHn4fEGBFZBObfaliHE603njKDA5aerF1wyInDIQxc2CeMlnPq045GKrF6JNgyTuu_dHjJHIeMsWlKX0ptr-crIcU8d_IV-cfle8Mpw7mo5BVuiDltYuiWuxuZHKacTfPusMm3FQNVrzeimBoF2z1YvzsHItEJWvMBT5LFLJo1AL1Opxa-aw98TNtCtIS20dGzcwpdY14S441lU3" />
+                        <div>
+                            <p class="font-caption text-caption text-on-surface-variant">Primary Surgeon</p>
+                            <p class="font-title-md text-title-md text-on-surface">Dr. Leila Hassan</p>
+                        </div>
+                    </div>
+                    <div class="w-px h-10 bg-outline-variant hidden md:block"></div>
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 rounded-full bg-surface-container flex items-center justify-center text-primary">
+                            <span class="material-symbols-outlined">schedule</span>
+                        </div>
+                        <div>
+                            <p class="font-caption text-caption text-on-surface-variant">Est. Duration</p>
+                            <p class="font-title-md text-title-md text-on-surface">120 min</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Content Area: Two columns -->
+        <div class="px-container_padding pb-stack_lg flex gap-grid_gutter">
+
+            <!-- Left Column: Status + Tabs + Checklist -->
+            <div class="flex-1 min-w-0">
+                <!-- Status Strip -->
+                <div class="flex items-center gap-4 mb-stack_md font-body-md text-body-md flex-wrap">
+                    <span class="flex items-center gap-1.5 clinical-teal-text"><span class="material-symbols-outlined" style="font-size:18px;">check_circle</span> 5 Completed</span>
+                    <span class="text-outline-variant">•</span>
+                    <span class="flex items-center gap-1.5 clinical-red-text"><span class="material-symbols-outlined" style="font-size:18px;">block</span> 2 Unresolved Blockers</span>
+                    <span class="text-outline-variant">•</span>
+                    <span class="flex items-center gap-1.5 text-on-surface-variant"><span class="material-symbols-outlined" style="font-size:18px;">rate_review</span> 1 Clinical Review R...</span>
+                </div>
+
+                <!-- Tabs -->
+                <div class="border-b border-outline-variant flex gap-stack_md mb-stack_lg" data-tab-group="detail-tabs">
+                    <button data-tab="checklist" class="font-label-md text-label-md text-primary border-b-2 border-primary py-3 whitespace-nowrap">Checklist</button>
+                    <button data-tab="timeline" class="font-label-md text-label-md text-on-surface-variant hover:text-primary py-3 whitespace-nowrap transition-colors">Timeline</button>
+                    <button data-tab="documents" class="font-label-md text-label-md text-on-surface-variant hover:text-primary py-3 whitespace-nowrap transition-colors">Documents</button>
+                    <button data-tab="comms" class="font-label-md text-label-md text-on-surface-variant hover:text-primary py-3 whitespace-nowrap transition-colors">Comms</button>
+                    <button data-tab="audit" class="font-label-md text-label-md text-on-surface-variant hover:text-primary py-3 whitespace-nowrap transition-colors">Audit</button>
+                </div>
+
+                <!-- Checklist Panel -->
+                <div data-tab-panel="detail-tabs" data-tab-id="checklist">
+                    <!-- Patient Preparation Group -->
+                    <div class="mb-stack_lg">
+                        <div class="flex items-center gap-2 mb-stack_md px-1">
+                            <span class="material-symbols-outlined text-on-surface-variant" style="font-size:20px;">person</span>
+                            <h4 class="font-title-md text-title-md text-on-surface font-semibold">Patient Preparation</h4>
+                        </div>
+                        <div class="bg-surface-container-lowest border border-outline-variant rounded-lg overflow-hidden shadow-sm">
+                            <!-- Item: Identity Confirmed ✓ -->
+                            <div class="flex items-center gap-4 px-stack_md py-3 border-b border-outline-variant hover:bg-surface-container-low transition-colors cursor-pointer">
+                                <span class="material-symbols-outlined clinical-teal-text icon-fill" style="font-size:22px;">check_circle</span>
+                                <div class="flex-1 min-w-0">
+                                    <p class="font-title-md text-title-md text-on-surface">Identity Confirmed</p>
+                                </div>
+                                <span class="font-caption text-caption text-on-surface-variant hidden sm:block">HIS Extract</span>
+                                <span class="font-caption text-caption text-on-surface-variant hidden md:block">08:00 AM</span>
+                                <div class="flex items-center gap-1.5">
+                                    <div class="w-6 h-6 rounded-full bg-primary-container flex items-center justify-center">
+                                        <span class="font-caption text-[9px] text-inverse-primary font-bold">SYS</span>
+                                    </div>
+                                    <span class="font-caption text-caption text-on-surface-variant hidden lg:block">System</span>
+                                </div>
+                            </div>
+                            <!-- Item: Surgical Consent ✓ -->
+                            <div class="flex items-center gap-4 px-stack_md py-3 hover:bg-surface-container-low transition-colors cursor-pointer">
+                                <span class="material-symbols-outlined clinical-teal-text icon-fill" style="font-size:22px;">check_circle</span>
+                                <div class="flex-1 min-w-0">
+                                    <p class="font-title-md text-title-md text-on-surface">Surgical Consent</p>
+                                </div>
+                                <span class="font-caption text-caption text-on-surface-variant hidden sm:block">E-Signature</span>
+                                <span class="font-caption text-caption text-on-surface-variant hidden md:block">Yesterday</span>
+                                <div class="flex items-center gap-1.5">
+                                    <img alt="M. Smith" class="w-6 h-6 rounded-full object-cover border border-outline-variant" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCxJp31iG-UpviuJXaCshpDBamdxUYCHYjQkElhzHn4fEGBFZBObfaliHE603njKDA5aerF1wyInDIQxc2CeMlnPq045GKrF6JNgyTuu_dHjJHIeMsWlKX0ptr-crIcU8d_IV-cfle8Mpw7mo5BVuiDltYuiWuxuZHKacTfPusMm3FQNVrzeimBoF2z1YvzsHItEJWvMBT5LFLJo1AL1Opxa-aw98TNtCtIS20dGzcwpdY14S441lU3" />
+                                    <span class="font-caption text-caption text-on-surface-variant hidden lg:block">M. Smith</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Clinical Clearance Group -->
+                    <div class="mb-stack_lg">
+                        <div class="flex items-center gap-2 mb-stack_md px-1">
+                            <span class="material-symbols-outlined text-on-surface-variant" style="font-size:20px;">local_hospital</span>
+                            <h4 class="font-title-md text-title-md text-on-surface font-semibold">Clinical Clearance</h4>
+                        </div>
+                        <div class="bg-surface-container-lowest border border-outline-variant rounded-lg overflow-hidden shadow-sm">
+                            <!-- Item: Anaesthesia Review — Pending -->
+                            <div class="flex items-center gap-4 px-stack_md py-3 border-b border-outline-variant hover:bg-surface-container-low transition-colors cursor-pointer">
+                                <span class="material-symbols-outlined text-error" style="font-size:22px;">error</span>
+                                <div class="flex-1 min-w-0">
+                                    <p class="font-title-md text-title-md text-on-surface">Anaesthesia Review</p>
+                                </div>
+                                <span class="font-caption text-caption text-on-surface-variant hidden sm:block">Pre-Op Form</span>
+                                <span class="font-label-md text-label-md text-error">Pending</span>
+                                <span class="font-caption text-caption text-on-surface-variant">Unassigned</span>
+                            </div>
+                            <!-- Item: Pre-op Labs — completed with warning -->
+                            <div data-open-panel="evidence-panel" class="flex items-center gap-4 px-stack_md py-3 hover:bg-surface-container-low transition-colors cursor-pointer">
+                                <span class="material-symbols-outlined clinical-amber-text" style="font-size:22px;">warning</span>
+                                <div class="flex-1 min-w-0">
+                                    <p class="font-title-md text-title-md text-on-surface">Pre-op Labs</p>
+                                </div>
+                                <span class="font-caption text-caption text-on-surface-variant hidden sm:block">Lab Results</span>
+                                <span class="font-caption text-caption text-on-surface-variant hidden md:block">10:45 AM</span>
+                                <div class="flex items-center gap-1.5">
+                                    <div class="w-6 h-6 rounded-full bg-primary-container flex items-center justify-center">
+                                        <span class="font-caption text-[9px] text-inverse-primary font-bold">SYS</span>
+                                    </div>
+                                    <span class="font-caption text-caption text-on-surface-variant hidden lg:block">System</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Operational & Logistical Group -->
+                    <div class="mb-stack_lg">
+                        <div class="flex items-center gap-2 mb-stack_md px-1">
+                            <span class="material-symbols-outlined text-on-surface-variant" style="font-size:20px;">inventory_2</span>
+                            <h4 class="font-title-md text-title-md text-on-surface font-semibold">Operational & Logistical</h4>
+                        </div>
+                        <div class="bg-surface-container-lowest border border-outline-variant rounded-lg overflow-hidden shadow-sm">
+                            <!-- Item: Insurance Authorization — Denied -->
+                            <div class="flex items-center gap-4 px-stack_md py-3 hover:bg-surface-container-low transition-colors cursor-pointer">
+                                <span class="material-symbols-outlined text-error" style="font-size:22px;">error</span>
+                                <div class="flex-1 min-w-0">
+                                    <p class="font-title-md text-title-md text-on-surface">Insurance Authorization</p>
+                                </div>
+                                <span class="font-caption text-caption text-on-surface-variant hidden sm:block">Payer Portal</span>
+                                <span class="font-label-md text-label-md text-error">Denied</span>
+                                <div class="flex items-center gap-1.5">
+                                    <img alt="S. Davis" class="w-6 h-6 rounded-full object-cover border border-outline-variant" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDmNAQuTMxB1PlfJqM4pRgA5_7zb9wMFtALODjk1G_rTFv1eQr4e2z62Sjt4Tk5_a-opgI9rQnniZI0NZf-CFdb4IxyyQEPS2K1Devk3sk5o75H85BboCSAkrgOwz8uA8WR9O-XvTY-64suYwxrkZBHcnVNwUGJ0g5_zqMB46WZGNWONUb6DZS7LvcZA0Q8CWCXEg0yT3vwmi5XOAHVRgYhE196Zpw7QFGpGWbpByVNl3ow_tMfL1ss" />
+                                    <span class="font-caption text-caption text-on-surface-variant hidden lg:block">S. Davis</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Timeline Panel (hidden by default) -->
+                <div data-tab-panel="detail-tabs" data-tab-id="timeline" class="hidden">
+                    <div class="p-stack_lg text-center text-on-surface-variant">
+                        <span class="material-symbols-outlined text-[48px] mb-2 block">timeline</span>
+                        <p class="font-body-lg text-body-lg">Timeline view will show chronological case events.</p>
+                    </div>
+                </div>
+                <!-- Documents Panel -->
+                <div data-tab-panel="detail-tabs" data-tab-id="documents" class="hidden">
+                    <div class="p-stack_lg text-center text-on-surface-variant">
+                        <span class="material-symbols-outlined text-[48px] mb-2 block">folder_open</span>
+                        <p class="font-body-lg text-body-lg">Documents attached to this case will appear here.</p>
+                    </div>
+                </div>
+                <!-- Comms Panel -->
+                <div data-tab-panel="detail-tabs" data-tab-id="comms" class="hidden">
+                    <div class="p-stack_lg text-center text-on-surface-variant">
+                        <span class="material-symbols-outlined text-[48px] mb-2 block">chat</span>
+                        <p class="font-body-lg text-body-lg">Communication history for this case.</p>
+                    </div>
+                </div>
+                <!-- Audit Panel -->
+                <div data-tab-panel="detail-tabs" data-tab-id="audit" class="hidden">
+                    <div class="p-stack_lg text-center text-on-surface-variant">
+                        <span class="material-symbols-outlined text-[48px] mb-2 block">history</span>
+                        <p class="font-body-lg text-body-lg">Audit log for this case.</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right Column: Evidence Panel (inline, always visible on desktop) -->
+            <div class="w-[380px] shrink-0 hidden xl:block">
+                <div class="bg-surface-container-lowest border border-outline-variant rounded-lg shadow-sm overflow-hidden sticky top-4">
+                    <!-- Panel Header -->
+                    <div class="flex items-center justify-between px-stack_md py-3 border-b border-outline-variant bg-surface">
+                        <div class="flex items-center gap-2">
+                            <span class="material-symbols-outlined text-on-surface-variant" style="font-size:20px;">description</span>
+                            <h4 class="font-title-md text-title-md text-on-surface font-semibold">Evidence: Lab Results</h4>
+                        </div>
+                        <button class="p-1 text-on-surface-variant hover:text-primary transition-colors rounded-full hover:bg-surface-container-high">
+                            <span class="material-symbols-outlined" style="font-size:20px;">close</span>
+                        </button>
+                    </div>
+                    <!-- Source info -->
+                    <div class="px-stack_md py-3 border-b border-outline-variant flex justify-between">
+                        <div>
+                            <p class="font-caption text-caption text-on-surface-variant">Source</p>
+                            <p class="font-body-md text-body-md text-on-surface">PDF Scan (Epic EHR)</p>
+                        </div>
+                        <div class="text-right">
+                            <p class="font-caption text-caption text-on-surface-variant">Extracted On</p>
+                            <p class="font-body-md text-body-md text-on-surface">10:45 AM, Today</p>
+                        </div>
+                    </div>
+                    <!-- Scanned Document Image -->
+                    <div class="px-stack_md py-3 border-b border-outline-variant">
+                        <div class="bg-surface-variant rounded-lg overflow-hidden aspect-[4/3] flex items-center justify-center relative">
+                            <div class="absolute inset-0 bg-gradient-to-b from-transparent to-surface-variant/60"></div>
+                            <div class="text-center z-10 p-4">
+                                <span class="material-symbols-outlined text-[64px] text-on-surface-variant mb-2 block">picture_as_pdf</span>
+                                <p class="font-caption text-caption text-on-surface-variant">MED-PATH Case Readiness CR-1051</p>
+                                <p class="font-caption text-caption text-on-surface-variant">LABORATORY REPORT</p>
+                                <div class="mt-3 border-2 border-dashed border-primary/40 rounded-lg p-2 bg-surface-container-lowest/80">
+                                    <p class="font-label-md text-label-md text-primary">HbA1c: 6.1%</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- Extracted Entity -->
+                    <div class="px-stack_md py-3 border-b border-outline-variant">
+                        <p class="font-label-md text-label-md text-on-surface-variant uppercase mb-2">Extracted Entity</p>
+                        <div class="bg-surface-container rounded-lg p-stack_md">
+                            <div class="flex items-center justify-between mb-2">
+                                <p class="font-title-md text-title-md text-on-surface">HbA1c Level</p>
+                                <span class="font-label-md text-label-md text-on-surface-variant px-2 py-0.5 border border-outline-variant rounded">92% Confidence</span>
+                            </div>
+                            <p class="font-headline-md text-headline-md text-on-surface mb-2">6.1 %</p>
+                            <p class="font-body-md text-body-md text-on-surface-variant">Matches warning criteria ( > 6.0% ) for procedure protocol <span class="font-semibold text-on-surface">Ortho-TK-01</span>.</p>
+                        </div>
+                    </div>
+                    <!-- Action Buttons -->
+                    <div class="px-stack_md py-3 flex justify-end gap-3">
+                        <button class="px-4 py-2 border border-outline-variant rounded-lg font-label-md text-label-md text-on-surface-variant hover:border-primary hover:text-primary transition-colors">Flag as Incorrect</button>
+                        <button class="px-4 py-2 bg-primary text-on-primary rounded-lg font-label-md text-label-md hover:bg-primary-container transition-colors">Acknowledge</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+</div>
+
+<!-- Mobile Evidence Panel (slide-over for smaller screens) -->
+<div class="panel-overlay fixed inset-0 bg-black/30 z-30 xl:hidden" data-overlay-for="evidence-panel"></div>
+<div id="evidence-panel" class="slide-panel fixed top-0 right-0 h-full w-[400px] max-w-full bg-surface-container-lowest border-l border-outline-variant shadow-xl z-40 xl:hidden overflow-y-auto">
+    <div class="flex items-center justify-between px-stack_md py-3 border-b border-outline-variant bg-surface sticky top-0 z-10">
+        <div class="flex items-center gap-2">
+            <span class="material-symbols-outlined text-on-surface-variant" style="font-size:20px;">description</span>
+            <h4 class="font-title-md text-title-md text-on-surface font-semibold">Evidence: Lab Results</h4>
+        </div>
+        <button data-close-panel="evidence-panel" class="p-1 text-on-surface-variant hover:text-primary transition-colors rounded-full hover:bg-surface-container-high">
+            <span class="material-symbols-outlined" style="font-size:20px;">close</span>
+        </button>
+    </div>
+    <div class="px-stack_md py-3 border-b border-outline-variant flex justify-between">
+        <div>
+            <p class="font-caption text-caption text-on-surface-variant">Source</p>
+            <p class="font-body-md text-body-md text-on-surface">PDF Scan (Epic EHR)</p>
+        </div>
+        <div class="text-right">
+            <p class="font-caption text-caption text-on-surface-variant">Extracted On</p>
+            <p class="font-body-md text-body-md text-on-surface">10:45 AM, Today</p>
+        </div>
+    </div>
+    <div class="px-stack_md py-3 border-b border-outline-variant">
+        <div class="bg-surface-variant rounded-lg overflow-hidden aspect-[4/3] flex items-center justify-center relative">
+            <div class="absolute inset-0 bg-gradient-to-b from-transparent to-surface-variant/60"></div>
+            <div class="text-center z-10 p-4">
+                <span class="material-symbols-outlined text-[64px] text-on-surface-variant mb-2 block">picture_as_pdf</span>
+                <p class="font-caption text-caption text-on-surface-variant">LABORATORY REPORT</p>
+                <div class="mt-3 border-2 border-dashed border-primary/40 rounded-lg p-2 bg-surface-container-lowest/80">
+                    <p class="font-label-md text-label-md text-primary">HbA1c: 6.1%</p>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="px-stack_md py-3 border-b border-outline-variant">
+        <p class="font-label-md text-label-md text-on-surface-variant uppercase mb-2">Extracted Entity</p>
+        <div class="bg-surface-container rounded-lg p-stack_md">
+            <div class="flex items-center justify-between mb-2">
+                <p class="font-title-md text-title-md text-on-surface">HbA1c Level</p>
+                <span class="font-label-md text-label-md text-on-surface-variant px-2 py-0.5 border border-outline-variant rounded">92% Confidence</span>
+            </div>
+            <p class="font-headline-md text-headline-md text-on-surface mb-2">6.1 %</p>
+            <p class="font-body-md text-body-md text-on-surface-variant">Matches warning criteria ( > 6.0% ) for procedure protocol <span class="font-semibold text-on-surface">Ortho-TK-01</span>.</p>
+        </div>
+    </div>
+    <div class="px-stack_md py-3 flex justify-end gap-3">
+        <button class="px-4 py-2 border border-outline-variant rounded-lg font-label-md text-label-md text-on-surface-variant hover:border-primary hover:text-primary transition-colors">Flag as Incorrect</button>
+        <button class="px-4 py-2 bg-primary text-on-primary rounded-lg font-label-md text-label-md hover:bg-primary-container transition-colors">Acknowledge</button>
+    </div>
+</div>
+
+<script src="shared.js"></script>
+</body>
+</html>

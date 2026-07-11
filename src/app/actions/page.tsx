@@ -1,0 +1,42 @@
+import { db } from "@/db/client";
+import { actionItems, surgicalCases, patients, communications } from "@/db/schema";
+import { eq, desc } from "drizzle-orm";
+import { redirect } from "next/navigation";
+import { auth } from "@/auth";
+import ActionsClient from "./ActionsClient";
+
+export default async function ActionsPage() {
+  const session = await auth();
+  if (!session) {
+    redirect("/login");
+  }
+
+  // Fetch actions
+  const allActions = db
+    .select({
+      id: actionItems.id,
+      title: actionItems.title,
+      description: actionItems.description,
+      priority: actionItems.priority,
+      status: actionItems.status,
+      ownerDepartment: actionItems.ownerDepartment,
+      requiresApproval: actionItems.requiresApproval,
+      caseNumber: surgicalCases.caseNumber,
+      procedureName: surgicalCases.procedureName,
+      patientName: patients.maskedName,
+    })
+    .from(actionItems)
+    .innerJoin(surgicalCases, eq(actionItems.surgicalCaseId, surgicalCases.id))
+    .innerJoin(patients, eq(surgicalCases.patientId, patients.id))
+    .all();
+
+  // Fetch communications
+  const comms = db.select().from(communications).all();
+
+  return (
+    <ActionsClient
+      initialActions={allActions}
+      comms={comms}
+    />
+  );
+}

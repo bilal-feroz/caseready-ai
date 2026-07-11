@@ -1,0 +1,525 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+    <title>CaseReady AI - Surgical Readiness Command Centre</title>
+    <meta name="description" content="Surgical readiness command centre for Burjeel Hospital, Abu Dhabi. Monitor tomorrow's operating list and resolve blockers with AI-powered insights." />
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet" />
+    <link href="shared.css" rel="stylesheet" />
+    <script>
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "on-primary-container":"#d380be","surface":"#f7f9ff","surface-variant":"#d9e4f0",
+                        "inverse-primary":"#fface8","inverse-on-surface":"#e7f2fe","on-surface":"#131d25",
+                        "surface-container-lowest":"#ffffff","outline":"#82737c","secondary-fixed-dim":"#e5c281",
+                        "secondary":"#755a24","surface-dim":"#d1dbe7","on-primary-fixed":"#3a0032",
+                        "surface-container":"#e5effb","surface-tint":"#8d447d","primary-container":"#5a174f",
+                        "tertiary":"#002320","surface-container-low":"#ecf4ff","on-tertiary-fixed":"#00201e",
+                        "on-error":"#ffffff","primary-fixed-dim":"#fface8","on-secondary-fixed":"#271900",
+                        "tertiary-fixed":"#9af2ea","surface-container-high":"#dfe9f6","background":"#f7f9ff",
+                        "primary-fixed":"#ffd7f0","on-secondary-container":"#785d27",
+                        "on-primary-fixed-variant":"#712c64","tertiary-fixed-dim":"#7ed5ce",
+                        "on-background":"#131d25","on-tertiary-container":"#51a9a2","outline-variant":"#d4c1cc",
+                        "on-tertiary":"#ffffff","secondary-fixed":"#ffdea5","surface-bright":"#f7f9ff",
+                        "inverse-surface":"#27313b","error-container":"#ffdad6","on-surface-variant":"#50434b",
+                        "on-tertiary-fixed-variant":"#00504c","on-secondary-fixed-variant":"#5b430e",
+                        "secondary-container":"#fdd896","error":"#ba1a1a","surface-container-highest":"#d9e4f0",
+                        "on-primary":"#ffffff","primary":"#3f0037","on-error-container":"#93000a",
+                        "on-secondary":"#ffffff","tertiary-container":"#003a37"
+                    },
+                    borderRadius: { DEFAULT:"0.25rem", lg:"0.5rem", xl:"0.75rem", full:"9999px" },
+                    spacing: {
+                        command_bar_height:"68px", grid_gutter:"24px", unit:"8px",
+                        container_padding:"24px", stack_sm:"8px", stack_md:"16px", stack_lg:"24px",
+                        nav_rail_width:"232px"
+                    },
+                    fontFamily: {
+                        "display-lg":["IBM Plex Sans","sans-serif"],"headline-md":["IBM Plex Sans","sans-serif"],
+                        "headline-sm":["IBM Plex Sans","sans-serif"],"title-md":["IBM Plex Sans","sans-serif"],
+                        "body-md":["IBM Plex Sans","sans-serif"],"caption":["IBM Plex Sans","sans-serif"],
+                        "body-lg":["IBM Plex Sans","sans-serif"],"label-md":["IBM Plex Sans","sans-serif"]
+                    },
+                    fontSize: {
+                        "display-lg":["32px",{lineHeight:"40px",letterSpacing:"-0.02em",fontWeight:"600"}],
+                        "headline-md":["24px",{lineHeight:"32px",letterSpacing:"-0.01em",fontWeight:"600"}],
+                        "headline-sm":["20px",{lineHeight:"28px",fontWeight:"600"}],
+                        "title-md":["16px",{lineHeight:"24px",fontWeight:"500"}],
+                        "body-md":["14px",{lineHeight:"20px",fontWeight:"400"}],
+                        "caption":["12px",{lineHeight:"16px",fontWeight:"400"}],
+                        "body-lg":["16px",{lineHeight:"24px",fontWeight:"400"}],
+                        "label-md":["12px",{lineHeight:"16px",letterSpacing:"0.05em",fontWeight:"600"}]
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+<body class="antialiased min-h-screen relative flex">
+
+<!-- ========== Side Navigation ========== -->
+<nav id="side-nav" class="w-[232px] h-screen fixed left-0 top-0 bg-surface border-r border-outline-variant flex flex-col py-stack_lg z-20">
+    <div class="px-container_padding mb-stack_lg">
+        <div class="flex items-center gap-stack_sm">
+            <img class="w-10 h-10 rounded-full object-cover shadow-sm" alt="Aisha Rahman" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDWl9MZUMs3GhKrFHY_jNyRhdR9AjrOBlbTVU9g-T4-y14mr2JjmGAQO5NQDr2LmXIuAwHsubMhWupcPNugRE57dzyokf0HSnyyO3o7FAc7AbDZDLUD8IOtoK56Y02Ig1Waem1WD6DLFHwVK8XsDLtjd-1q-FBE1EFI81jte39tCLWO6LOfBFIMJPwFTjR81gOaI3YijA_JQoMtCHt7xtnBjC9N3BqAYg1AZtXsMekO_31OY3V_fMjq" />
+            <div>
+                <h1 class="font-headline-sm text-headline-sm font-black text-primary">CaseReady AI</h1>
+                <p class="font-caption text-caption text-on-surface-variant">Burjeel Hospital, Abu Dhabi</p>
+            </div>
+        </div>
+    </div>
+    <button class="mx-container_padding mb-stack_lg bg-primary text-on-primary font-label-md text-label-md py-2 px-4 rounded-full hover:bg-primary-container transition-colors flex items-center justify-center gap-2">
+        <span class="material-symbols-outlined" style="font-size: 18px;">add</span>
+        New Case Request
+    </button>
+    <ul class="flex-1 overflow-y-auto">
+        <li><a data-nav="Command Centre" class="flex items-center gap-3 px-container_padding py-3 transition-colors" href="index.html">
+            <span class="material-symbols-outlined">dashboard</span>
+            <span class="font-body-md text-body-md">Command Centre</span>
+        </a></li>
+        <li><a data-nav="Surgical Cases" class="flex items-center gap-3 px-container_padding py-3 text-on-surface-variant hover:bg-surface-container-high transition-colors" href="#">
+            <span class="material-symbols-outlined">clinical_notes</span>
+            <span class="font-body-md text-body-md">Surgical Cases</span>
+        </a></li>
+        <li><a data-nav="Action Centre" class="flex items-center gap-3 px-container_padding py-3 text-on-surface-variant hover:bg-surface-container-high transition-colors" href="action-centre.html">
+            <span class="material-symbols-outlined">pending_actions</span>
+            <span class="font-body-md text-body-md">Action Centre</span>
+        </a></li>
+        <li><a data-nav="Slot Rescue" class="flex items-center gap-3 px-container_padding py-3 text-on-surface-variant hover:bg-surface-container-high transition-colors" href="slot-rescue.html">
+            <span class="material-symbols-outlined">published_with_changes</span>
+            <span class="font-body-md text-body-md">Slot Rescue</span>
+        </a></li>
+        <li><a data-nav="Audit Trail" class="flex items-center gap-3 px-container_padding py-3 text-on-surface-variant hover:bg-surface-container-high transition-colors" href="audit-trail.html">
+            <span class="material-symbols-outlined">history</span>
+            <span class="font-body-md text-body-md">Audit Trail</span>
+        </a></li>
+        <li><a data-nav="Analytics" class="flex items-center gap-3 px-container_padding py-3 text-on-surface-variant hover:bg-surface-container-high transition-colors" href="#">
+            <span class="material-symbols-outlined">analytics</span>
+            <span class="font-body-md text-body-md">Analytics</span>
+        </a></li>
+        <li><a data-nav="Settings" class="flex items-center gap-3 px-container_padding py-3 text-on-surface-variant hover:bg-surface-container-high transition-colors" href="#">
+            <span class="material-symbols-outlined">settings</span>
+            <span class="font-body-md text-body-md">Settings</span>
+        </a></li>
+    </ul>
+    <div class="mt-auto px-container_padding border-t border-outline-variant pt-stack_sm">
+        <a class="flex items-center gap-3 py-2 text-on-surface-variant hover:bg-surface-container-high transition-colors rounded-lg px-2 -mx-2" href="#">
+            <span class="material-symbols-outlined">help</span>
+            <span class="font-body-md text-body-md">Help</span>
+        </a>
+        <a class="flex items-center gap-3 py-2 text-on-surface-variant hover:bg-surface-container-high transition-colors rounded-lg px-2 -mx-2" href="#">
+            <span class="material-symbols-outlined">contact_support</span>
+            <span class="font-body-md text-body-md">Support</span>
+        </a>
+    </div>
+</nav>
+
+<!-- ========== Top Navigation Bar ========== -->
+<header class="h-[68px] fixed top-0 right-0 left-[232px] bg-surface-container-low border-b border-outline-variant flex justify-between items-center px-container_padding z-10">
+    <div class="flex items-center gap-stack_lg">
+        <h2 class="font-headline-sm text-headline-sm font-black text-primary hidden lg:block">CaseReady AI</h2>
+        <div class="relative w-64 hidden md:block">
+            <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant text-sm">search</span>
+            <input id="global-search" class="w-full pl-9 pr-3 py-1.5 bg-surface border border-outline-variant rounded-full font-body-md text-body-md text-on-surface focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all placeholder:text-on-surface-variant" placeholder="Search patients, cases, or ORs" type="text" />
+        </div>
+        <nav class="hidden lg:flex gap-stack_md">
+            <a class="font-label-md text-label-md text-primary border-b-2 border-primary pb-1" href="#">Cases</a>
+            <a class="font-label-md text-label-md text-on-surface-variant hover:text-primary transition-all" href="#">Metrics</a>
+            <a class="font-label-md text-label-md text-on-surface-variant hover:text-primary transition-all" href="#">Inventory</a>
+        </nav>
+    </div>
+    <div class="flex items-center gap-stack_md">
+        <span class="font-label-md text-label-md text-primary px-3 py-1 bg-primary-fixed rounded-full flex items-center gap-2">
+            <span class="w-2 h-2 rounded-full bg-primary inline-block pulse-dot"></span>
+            System Status: Active
+        </span>
+        <div class="flex items-center gap-stack_sm">
+            <button class="p-2 text-on-surface-variant hover:text-primary rounded-full hover:bg-surface-container-high transition-all">
+                <span class="material-symbols-outlined">notifications</span>
+            </button>
+            <button class="p-2 text-on-surface-variant hover:text-primary rounded-full hover:bg-surface-container-high transition-all">
+                <span class="material-symbols-outlined">help</span>
+            </button>
+            <button class="p-2 text-on-surface-variant hover:text-primary rounded-full hover:bg-surface-container-high transition-all">
+                <span class="material-symbols-outlined">language</span>
+            </button>
+        </div>
+        <img class="w-8 h-8 rounded-full object-cover shadow-sm ml-stack_sm cursor-pointer border border-outline-variant hover:border-primary transition-colors" alt="Aisha Rahman" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDmNAQuTMxB1PlfJqM4pRgA5_7zb9wMFtALODjk1G_rTFv1eQr4e2z62Sjt4Tk5_a-opgI9rQnniZI0NZf-CFdb4IxyyQEPS2K1Devk3sk5o75H85BboCSAkrgOwz8uA8WR9O-XvTY-64suYwxrkZBHcnVNwUGJ0g5_zqMB46WZGNWONUb6DZS7LvcZA0Q8CWCXEg0yT3vwmi5XOAHVRgYhE196Zpw7QFGpGWbpByVNl3ow_tMfL1ss" />
+    </div>
+</header>
+
+<!-- ========== Main Content Canvas ========== -->
+<main class="ml-[232px] mt-[68px] flex-1 p-container_padding max-w-[1600px] mx-auto w-full">
+
+    <!-- Page Header -->
+    <div class="flex flex-col md:flex-row justify-between items-start md:items-end mb-stack_lg gap-stack_md">
+        <div>
+            <h2 class="font-display-lg text-display-lg text-on-surface mb-stack_sm">Good morning, Aisha</h2>
+            <p class="font-body-lg text-body-lg text-on-surface-variant">Here is tomorrow's surgical readiness across 6 operating rooms.</p>
+        </div>
+        <div class="flex items-center gap-stack_md">
+            <div class="flex items-center gap-2 bg-surface-container-lowest px-4 py-2 border border-outline-variant rounded-lg shadow-sm">
+                <span class="material-symbols-outlined text-primary">calendar_month</span>
+                <span class="font-title-md text-title-md text-on-surface">Monday, 13 July 2026</span>
+            </div>
+            <button class="bg-primary text-on-primary font-title-md text-title-md py-2 px-6 rounded-lg hover:bg-primary-container transition-all shadow-sm">
+                Review attention queue
+            </button>
+        </div>
+    </div>
+
+    <!-- Horizontal Readiness Strip -->
+    <div class="w-full bg-surface-container-lowest border border-outline-variant rounded-xl shadow-sm mb-stack_lg overflow-hidden flex divide-x divide-outline-variant">
+        <div class="flex-1 px-container_padding py-4 flex flex-col justify-center items-center group hover:bg-surface-container-low transition-colors cursor-pointer">
+            <span class="font-headline-md text-headline-md text-on-surface">18</span>
+            <span class="font-label-md text-label-md text-on-surface-variant uppercase mt-1">Scheduled Cases</span>
+        </div>
+        <div class="flex-1 px-container_padding py-4 flex flex-col justify-center items-center clinical-teal-bg group hover:brightness-95 transition-all cursor-pointer">
+            <div class="flex items-center gap-2">
+                <span class="material-symbols-outlined clinical-teal-text">check_circle</span>
+                <span class="font-headline-md text-headline-md clinical-teal-text">14</span>
+            </div>
+            <span class="font-label-md text-label-md clinical-teal-text uppercase mt-1">Ready</span>
+        </div>
+        <div class="flex-1 px-container_padding py-4 flex flex-col justify-center items-center clinical-amber-bg group hover:brightness-95 transition-all cursor-pointer">
+            <div class="flex items-center gap-2">
+                <span class="material-symbols-outlined clinical-amber-text">warning</span>
+                <span class="font-headline-md text-headline-md clinical-amber-text">3</span>
+            </div>
+            <span class="font-label-md text-label-md clinical-amber-text uppercase mt-1">At Risk</span>
+        </div>
+        <div class="flex-1 px-container_padding py-4 flex flex-col justify-center items-center clinical-red-bg group hover:brightness-95 transition-all cursor-pointer">
+            <div class="flex items-center gap-2">
+                <span class="material-symbols-outlined clinical-red-text">block</span>
+                <span class="font-headline-md text-headline-md clinical-red-text">1</span>
+            </div>
+            <span class="font-label-md text-label-md clinical-red-text uppercase mt-1">Blocked</span>
+        </div>
+        <div class="flex-1 px-container_padding py-4 flex flex-col justify-center items-center group hover:bg-surface-container-low transition-colors cursor-pointer bg-surface-container">
+            <span class="font-headline-md text-headline-md text-error">210</span>
+            <span class="font-label-md text-label-md text-on-surface-variant uppercase mt-1">OR Mins At Risk</span>
+        </div>
+    </div>
+
+    <!-- 7/5 Split Layout -->
+    <div class="grid grid-cols-1 xl:grid-cols-12 gap-grid_gutter">
+
+        <!-- Left: Tomorrow's Operating List -->
+        <div class="xl:col-span-7 bg-surface-container-lowest border border-outline-variant rounded-xl shadow-sm flex flex-col overflow-hidden h-[800px]">
+            <div class="px-container_padding py-stack_md border-b border-outline-variant flex justify-between items-center bg-surface">
+                <h3 class="font-headline-sm text-headline-sm text-on-surface">Tomorrow's Operating List</h3>
+                <div class="flex gap-2">
+                    <button class="p-1 text-on-surface-variant hover:text-primary transition-colors"><span class="material-symbols-outlined">filter_list</span></button>
+                    <button class="p-1 text-on-surface-variant hover:text-primary transition-colors"><span class="material-symbols-outlined">more_vert</span></button>
+                </div>
+            </div>
+            <!-- OR Tabs -->
+            <div class="px-container_padding border-b border-outline-variant flex gap-stack_md overflow-x-auto no-scrollbar" data-tab-group="or-tabs">
+                <button data-tab="all" class="font-label-md text-label-md text-primary border-b-2 border-primary py-3 whitespace-nowrap">All Rooms</button>
+                <button data-tab="or1" class="font-label-md text-label-md text-on-surface-variant hover:text-primary py-3 whitespace-nowrap transition-colors">OR 01</button>
+                <button data-tab="or2" class="font-label-md text-label-md text-on-surface-variant hover:text-primary py-3 whitespace-nowrap transition-colors">OR 02</button>
+                <button data-tab="or3" class="font-label-md text-label-md text-on-surface-variant hover:text-primary py-3 whitespace-nowrap transition-colors">OR 03</button>
+                <button data-tab="or4" class="font-label-md text-label-md text-on-surface-variant hover:text-primary py-3 whitespace-nowrap transition-colors">OR 04</button>
+                <button data-tab="or5" class="font-label-md text-label-md text-on-surface-variant hover:text-primary py-3 whitespace-nowrap transition-colors">OR 05</button>
+                <button data-tab="or6" class="font-label-md text-label-md text-on-surface-variant hover:text-primary py-3 whitespace-nowrap transition-colors">OR 06</button>
+            </div>
+            <!-- Schedule Table -->
+            <div class="flex-1 overflow-auto bg-surface-container-lowest relative">
+                <table class="w-full text-left border-collapse">
+                    <thead class="sticky top-0 bg-surface-container border-b border-outline-variant z-10">
+                        <tr>
+                            <th class="py-2 px-4 font-label-md text-label-md text-on-surface-variant w-20">Time</th>
+                            <th class="py-2 px-4 font-label-md text-label-md text-on-surface-variant">Patient / ID</th>
+                            <th class="py-2 px-4 font-label-md text-label-md text-on-surface-variant">Procedure / Surgeon</th>
+                            <th class="py-2 px-4 font-label-md text-label-md text-on-surface-variant">Readiness</th>
+                            <th class="py-2 px-4 font-label-md text-label-md text-on-surface-variant">Status</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-outline-variant font-body-md text-body-md text-on-surface bg-surface-container-lowest">
+                        <!-- Row 1: Ready -->
+                        <tr data-href="case-detail.html" class="hover:bg-surface-container-low transition-colors group cursor-pointer h-[72px]">
+                            <td class="py-3 px-4 text-on-surface-variant border-r border-outline-variant relative">
+                                08:00
+                                <div class="absolute right-0 top-0 bottom-0 w-1 bg-outline-variant"></div>
+                            </td>
+                            <td class="py-3 px-4">
+                                <div class="font-title-md text-title-md">M. Al Nuaimi</div>
+                                <div class="font-caption text-caption text-on-surface-variant">MRN: 98234-A</div>
+                            </td>
+                            <td class="py-3 px-4">
+                                <div>Total Knee Arthroplasty</div>
+                                <div class="font-caption text-caption text-on-surface-variant">Dr. S. Khalfan</div>
+                            </td>
+                            <td class="py-3 px-4">
+                                <div class="flex items-center gap-2">
+                                    <div class="w-16 h-1.5 bg-surface-variant rounded-full overflow-hidden">
+                                        <div class="w-full h-full clinical-teal-bg"></div>
+                                    </div>
+                                    <span class="font-label-md text-label-md clinical-teal-text">100%</span>
+                                </div>
+                            </td>
+                            <td class="py-3 px-4">
+                                <span class="inline-flex items-center gap-1 px-2 py-1 rounded-md clinical-teal-bg clinical-teal-text font-label-md text-[10px]">
+                                    <span class="material-symbols-outlined" style="font-size: 14px;">check_circle</span> Ready
+                                </span>
+                            </td>
+                        </tr>
+                        <!-- Row 2: At Risk -->
+                        <tr data-href="case-detail.html" class="hover:bg-surface-container-low transition-colors group cursor-pointer bg-surface h-[72px]">
+                            <td class="py-3 px-4 text-on-surface-variant border-r border-outline-variant relative">
+                                10:30
+                                <div class="absolute right-0 top-0 bottom-0 w-1 clinical-amber-bg"></div>
+                            </td>
+                            <td class="py-3 px-4">
+                                <div class="font-title-md text-title-md">A. Saeed</div>
+                                <div class="font-caption text-caption text-on-surface-variant">MRN: 44102-B</div>
+                            </td>
+                            <td class="py-3 px-4">
+                                <div>Laparoscopic Cholecystectomy</div>
+                                <div class="font-caption text-caption text-on-surface-variant">Dr. R. Haddad</div>
+                            </td>
+                            <td class="py-3 px-4">
+                                <div class="flex items-center gap-2">
+                                    <div class="w-16 h-1.5 bg-surface-variant rounded-full overflow-hidden">
+                                        <div class="w-[85%] h-full clinical-amber-bg"></div>
+                                    </div>
+                                    <span class="font-label-md text-label-md clinical-amber-text">85%</span>
+                                </div>
+                            </td>
+                            <td class="py-3 px-4">
+                                <div class="flex flex-col gap-1">
+                                    <span class="inline-flex items-center gap-1 px-2 py-1 rounded-md clinical-amber-bg clinical-amber-text font-label-md text-[10px] w-fit">
+                                        <span class="material-symbols-outlined" style="font-size: 14px;">warning</span> At Risk
+                                    </span>
+                                    <span class="font-caption text-[10px] text-error leading-tight truncate w-32" title="Insurance authorization attachment missing">Auth missing</span>
+                                </div>
+                            </td>
+                        </tr>
+                        <!-- Row 3: Blocked -->
+                        <tr data-href="case-detail.html" class="hover:bg-surface-container-low transition-colors group cursor-pointer h-[72px]">
+                            <td class="py-3 px-4 text-on-surface-variant border-r border-outline-variant relative">
+                                12:00
+                                <div class="absolute right-0 top-0 bottom-0 w-1 clinical-red-bg"></div>
+                            </td>
+                            <td class="py-3 px-4">
+                                <div class="font-title-md text-title-md">F. Mansoor</div>
+                                <div class="font-caption text-caption text-on-surface-variant">MRN: 11299-C</div>
+                            </td>
+                            <td class="py-3 px-4">
+                                <div>Spinal Fusion (L4-L5)</div>
+                                <div class="font-caption text-caption text-on-surface-variant">Dr. T. Rahman</div>
+                            </td>
+                            <td class="py-3 px-4">
+                                <div class="flex items-center gap-2">
+                                    <div class="w-16 h-1.5 bg-surface-variant rounded-full overflow-hidden">
+                                        <div class="w-[40%] h-full clinical-red-bg"></div>
+                                    </div>
+                                    <span class="font-label-md text-label-md clinical-red-text">40%</span>
+                                </div>
+                            </td>
+                            <td class="py-3 px-4">
+                                <div class="flex flex-col gap-1">
+                                    <span class="inline-flex items-center gap-1 px-2 py-1 rounded-md clinical-red-bg clinical-red-text font-label-md text-[10px] w-fit">
+                                        <span class="material-symbols-outlined" style="font-size: 14px;">block</span> Blocked
+                                    </span>
+                                    <span class="font-caption text-[10px] text-error leading-tight truncate w-32" title="Cardiology clearance rejected (abnormal ECG)">Cardio clearance</span>
+                                </div>
+                            </td>
+                        </tr>
+                        <!-- Row 4: Ready -->
+                        <tr data-href="case-detail.html" class="hover:bg-surface-container-low transition-colors group cursor-pointer bg-surface h-[72px]">
+                            <td class="py-3 px-4 text-on-surface-variant border-r border-outline-variant relative">
+                                15:00
+                                <div class="absolute right-0 top-0 bottom-0 w-1 bg-outline-variant"></div>
+                            </td>
+                            <td class="py-3 px-4">
+                                <div class="font-title-md text-title-md">S. Abdullah</div>
+                                <div class="font-caption text-caption text-on-surface-variant">MRN: 77812-D</div>
+                            </td>
+                            <td class="py-3 px-4">
+                                <div>Arthroscopy</div>
+                                <div class="font-caption text-caption text-on-surface-variant">Dr. S. Khalfan</div>
+                            </td>
+                            <td class="py-3 px-4">
+                                <div class="flex items-center gap-2">
+                                    <div class="w-16 h-1.5 bg-surface-variant rounded-full overflow-hidden">
+                                        <div class="w-full h-full clinical-teal-bg"></div>
+                                    </div>
+                                    <span class="font-label-md text-label-md clinical-teal-text">100%</span>
+                                </div>
+                            </td>
+                            <td class="py-3 px-4">
+                                <span class="inline-flex items-center gap-1 px-2 py-1 rounded-md clinical-teal-bg clinical-teal-text font-label-md text-[10px]">
+                                    <span class="material-symbols-outlined" style="font-size: 14px;">check_circle</span> Ready
+                                </span>
+                            </td>
+                        </tr>
+                        <!-- Row 5: Ready -->
+                        <tr data-href="case-detail.html" class="hover:bg-surface-container-low transition-colors group cursor-pointer h-[72px]">
+                            <td class="py-3 px-4 text-on-surface-variant border-r border-outline-variant relative">
+                                16:30
+                                <div class="absolute right-0 top-0 bottom-0 w-1 bg-outline-variant"></div>
+                            </td>
+                            <td class="py-3 px-4">
+                                <div class="font-title-md text-title-md">K. Jaber</div>
+                                <div class="font-caption text-caption text-on-surface-variant">MRN: 33211-E</div>
+                            </td>
+                            <td class="py-3 px-4">
+                                <div>Hernia Repair</div>
+                                <div class="font-caption text-caption text-on-surface-variant">Dr. R. Haddad</div>
+                            </td>
+                            <td class="py-3 px-4">
+                                <div class="flex items-center gap-2">
+                                    <div class="w-16 h-1.5 bg-surface-variant rounded-full overflow-hidden">
+                                        <div class="w-[95%] h-full clinical-teal-bg"></div>
+                                    </div>
+                                    <span class="font-label-md text-label-md clinical-teal-text">95%</span>
+                                </div>
+                            </td>
+                            <td class="py-3 px-4">
+                                <span class="inline-flex items-center gap-1 px-2 py-1 rounded-md clinical-teal-bg clinical-teal-text font-label-md text-[10px]">
+                                    <span class="material-symbols-outlined" style="font-size: 14px;">check_circle</span> Ready
+                                </span>
+                            </td>
+                        </tr>
+                        <!-- Row 6: At Risk -->
+                        <tr data-href="case-detail.html" class="hover:bg-surface-container-low transition-colors group cursor-pointer bg-surface h-[72px]">
+                            <td class="py-3 px-4 text-on-surface-variant border-r border-outline-variant relative">
+                                18:00
+                                <div class="absolute right-0 top-0 bottom-0 w-1 clinical-amber-bg"></div>
+                            </td>
+                            <td class="py-3 px-4">
+                                <div class="font-title-md text-title-md">L. Tariq</div>
+                                <div class="font-caption text-caption text-on-surface-variant">MRN: 55421-F</div>
+                            </td>
+                            <td class="py-3 px-4">
+                                <div>Tympanoplasty</div>
+                                <div class="font-caption text-caption text-on-surface-variant">Dr. M. Fayed</div>
+                            </td>
+                            <td class="py-3 px-4">
+                                <div class="flex items-center gap-2">
+                                    <div class="w-16 h-1.5 bg-surface-variant rounded-full overflow-hidden">
+                                        <div class="w-[80%] h-full clinical-amber-bg"></div>
+                                    </div>
+                                    <span class="font-label-md text-label-md clinical-amber-text">80%</span>
+                                </div>
+                            </td>
+                            <td class="py-3 px-4">
+                                <div class="flex flex-col gap-1">
+                                    <span class="inline-flex items-center gap-1 px-2 py-1 rounded-md clinical-amber-bg clinical-amber-text font-label-md text-[10px] w-fit">
+                                        <span class="material-symbols-outlined" style="font-size: 14px;">warning</span> At Risk
+                                    </span>
+                                    <span class="font-caption text-[10px] text-error leading-tight truncate w-32" title="Pre-op bloodwork results pending">Bloodwork pending</span>
+                                </div>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Right: AI Attention Queue -->
+        <div class="xl:col-span-5 flex flex-col gap-stack_md h-[800px]">
+            <div class="bg-surface-container-lowest border border-outline-variant rounded-xl shadow-sm flex flex-col overflow-hidden flex-1">
+                <div class="px-container_padding py-stack_md border-b border-outline-variant flex justify-between items-center bg-surface">
+                    <div class="flex items-center gap-2">
+                        <span class="material-symbols-outlined text-primary">campaign</span>
+                        <h3 class="font-headline-sm text-headline-sm text-on-surface">Needs attention</h3>
+                    </div>
+                    <span class="bg-error-container text-on-error-container font-label-md text-label-md px-2 py-1 rounded-full">4 Items</span>
+                </div>
+                <div class="flex-1 overflow-auto p-container_padding flex flex-col gap-stack_md bg-surface">
+                    <!-- Action Item 1 (High Urgency) -->
+                    <div class="bg-surface-container-lowest border border-outline-variant rounded-lg p-stack_md shadow-sm border-l-4 border-l-error relative group">
+                        <div class="flex justify-between items-start mb-2">
+                            <div class="flex items-center gap-2">
+                                <span class="material-symbols-outlined text-error" style="font-size: 18px;">priority_high</span>
+                                <span class="font-label-md text-label-md text-error uppercase">High Urgency</span>
+                            </div>
+                            <span class="font-caption text-caption text-on-surface-variant flex items-center gap-1">
+                                <span class="material-symbols-outlined" style="font-size: 14px;">schedule</span> Due in 2 hrs
+                            </span>
+                        </div>
+                        <h4 class="font-title-md text-title-md text-on-surface mb-1">A. Saeed (OR 02 - 10:30)</h4>
+                        <p class="font-body-md text-body-md text-on-surface-variant mb-stack_md">Insurance authorization attachment missing from Daman portal. Surgery cannot proceed without financial clearance.</p>
+                        <div class="flex items-center justify-between mt-auto">
+                            <div class="flex items-center gap-2">
+                                <div class="w-6 h-6 rounded-full bg-surface-variant flex items-center justify-center font-caption text-[10px] text-on-surface-variant border border-outline-variant">FA</div>
+                                <span class="font-caption text-caption text-on-surface-variant">Finance Dept.</span>
+                            </div>
+                            <div class="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                                <button class="px-3 py-1.5 border border-outline-variant rounded-md font-label-md text-label-md text-on-surface-variant hover:border-primary hover:text-primary transition-colors">View evidence</button>
+                                <button class="px-3 py-1.5 bg-primary text-on-primary rounded-md font-label-md text-label-md hover:bg-primary-container transition-colors">Review action</button>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- Action Item 2 (High Urgency) -->
+                    <div class="bg-surface-container-lowest border border-outline-variant rounded-lg p-stack_md shadow-sm border-l-4 border-l-error relative group">
+                        <div class="flex justify-between items-start mb-2">
+                            <div class="flex items-center gap-2">
+                                <span class="material-symbols-outlined text-error" style="font-size: 18px;">priority_high</span>
+                                <span class="font-label-md text-label-md text-error uppercase">High Urgency</span>
+                            </div>
+                            <span class="font-caption text-caption text-on-surface-variant flex items-center gap-1">
+                                <span class="material-symbols-outlined" style="font-size: 14px;">schedule</span> Due in 3 hrs
+                            </span>
+                        </div>
+                        <h4 class="font-title-md text-title-md text-on-surface mb-1">F. Mansoor (OR 01 - 12:00)</h4>
+                        <p class="font-body-md text-body-md text-on-surface-variant mb-stack_md">Cardiology clearance rejected due to abnormal ECG. Requires immediate re-assessment by Dr. Hakim.</p>
+                        <div class="flex items-center justify-between mt-auto">
+                            <div class="flex items-center gap-2">
+                                <div class="w-6 h-6 rounded-full bg-surface-variant flex items-center justify-center font-caption text-[10px] text-on-surface-variant border border-outline-variant">CC</div>
+                                <span class="font-caption text-caption text-on-surface-variant">Cardiology Clinic</span>
+                            </div>
+                            <div class="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                                <button class="px-3 py-1.5 border border-outline-variant rounded-md font-label-md text-label-md text-on-surface-variant hover:border-primary hover:text-primary transition-colors">View evidence</button>
+                                <button class="px-3 py-1.5 bg-primary text-on-primary rounded-md font-label-md text-label-md hover:bg-primary-container transition-colors">Review action</button>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- Action Item 3 (Medium Urgency) -->
+                    <div class="bg-surface-container-lowest border border-outline-variant rounded-lg p-stack_md shadow-sm border-l-4 border-l-secondary relative group opacity-90">
+                        <div class="flex justify-between items-start mb-2">
+                            <div class="flex items-center gap-2">
+                                <span class="material-symbols-outlined text-secondary" style="font-size: 18px;">info</span>
+                                <span class="font-label-md text-label-md text-secondary uppercase">Medium Urgency</span>
+                            </div>
+                            <span class="font-caption text-caption text-on-surface-variant flex items-center gap-1">
+                                <span class="material-symbols-outlined" style="font-size: 14px;">schedule</span> Due Tomorrow
+                            </span>
+                        </div>
+                        <h4 class="font-title-md text-title-md text-on-surface mb-1">L. Tariq (OR 03 - 18:00)</h4>
+                        <p class="font-body-md text-body-md text-on-surface-variant mb-stack_md">Pre-op bloodwork results pending. Lab SLA exceeded by 4 hours.</p>
+                        <div class="flex items-center justify-between mt-auto">
+                            <div class="flex items-center gap-2">
+                                <div class="w-6 h-6 rounded-full bg-surface-variant flex items-center justify-center font-caption text-[10px] text-on-surface-variant border border-outline-variant">LB</div>
+                                <span class="font-caption text-caption text-on-surface-variant">Central Lab</span>
+                            </div>
+                            <div class="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                                <button class="px-3 py-1.5 border border-outline-variant rounded-md font-label-md text-label-md text-on-surface-variant hover:border-primary hover:text-primary transition-colors">View evidence</button>
+                                <button class="px-3 py-1.5 border border-primary text-primary rounded-md font-label-md text-label-md hover:bg-primary-fixed transition-colors">Review action</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <!-- AI Insight Panel -->
+            <div class="bg-primary-container text-on-primary-container rounded-xl p-container_padding shadow-sm flex items-start gap-stack_md border border-outline-variant shrink-0">
+                <span class="material-symbols-outlined text-inverse-primary" style="font-size: 28px;">auto_awesome</span>
+                <div>
+                    <h4 class="font-title-md text-title-md text-inverse-primary mb-1">AI Insight Generated</h4>
+                    <p class="font-body-md text-body-md text-primary-fixed">CaseReady found 6 actions that may prevent 3 cancellations across tomorrow's schedule.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</main>
+
+<script src="shared.js"></script>
+</body>
+</html>

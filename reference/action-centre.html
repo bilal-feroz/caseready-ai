@@ -1,0 +1,365 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+    <title>Action Centre | CaseReady AI</title>
+    <meta name="description" content="Resolve surgical-readiness blockers before they become cancellations. Review AI-drafted communications and approve actions." />
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet" />
+    <link href="shared.css" rel="stylesheet" />
+    <script>
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "on-primary-container":"#d380be","surface":"#f7f9ff","surface-variant":"#d9e4f0",
+                        "inverse-primary":"#fface8","inverse-on-surface":"#e7f2fe","on-surface":"#131d25",
+                        "surface-container-lowest":"#ffffff","outline":"#82737c","secondary-fixed-dim":"#e5c281",
+                        "secondary":"#755a24","surface-dim":"#d1dbe7","on-primary-fixed":"#3a0032",
+                        "surface-container":"#e5effb","surface-tint":"#8d447d","primary-container":"#5a174f",
+                        "tertiary":"#002320","surface-container-low":"#ecf4ff","on-tertiary-fixed":"#00201e",
+                        "on-error":"#ffffff","primary-fixed-dim":"#fface8","on-secondary-fixed":"#271900",
+                        "tertiary-fixed":"#9af2ea","surface-container-high":"#dfe9f6","background":"#f7f9ff",
+                        "primary-fixed":"#ffd7f0","on-secondary-container":"#785d27",
+                        "on-primary-fixed-variant":"#712c64","tertiary-fixed-dim":"#7ed5ce",
+                        "on-background":"#131d25","on-tertiary-container":"#51a9a2","outline-variant":"#d4c1cc",
+                        "on-tertiary":"#ffffff","secondary-fixed":"#ffdea5","surface-bright":"#f7f9ff",
+                        "inverse-surface":"#27313b","error-container":"#ffdad6","on-surface-variant":"#50434b",
+                        "on-tertiary-fixed-variant":"#00504c","on-secondary-fixed-variant":"#5b430e",
+                        "secondary-container":"#fdd896","error":"#ba1a1a","surface-container-highest":"#d9e4f0",
+                        "on-primary":"#ffffff","primary":"#3f0037","on-error-container":"#93000a",
+                        "on-secondary":"#ffffff","tertiary-container":"#003a37"
+                    },
+                    borderRadius: { DEFAULT:"0.25rem", lg:"0.5rem", xl:"0.75rem", full:"9999px" },
+                    spacing: {
+                        command_bar_height:"68px", grid_gutter:"24px", unit:"8px",
+                        container_padding:"24px", stack_sm:"8px", stack_md:"16px", stack_lg:"24px",
+                        nav_rail_width:"232px"
+                    },
+                    fontFamily: {
+                        "display-lg":["IBM Plex Sans","sans-serif"],"headline-md":["IBM Plex Sans","sans-serif"],
+                        "headline-sm":["IBM Plex Sans","sans-serif"],"title-md":["IBM Plex Sans","sans-serif"],
+                        "body-md":["IBM Plex Sans","sans-serif"],"caption":["IBM Plex Sans","sans-serif"],
+                        "body-lg":["IBM Plex Sans","sans-serif"],"label-md":["IBM Plex Sans","sans-serif"]
+                    },
+                    fontSize: {
+                        "display-lg":["32px",{lineHeight:"40px",letterSpacing:"-0.02em",fontWeight:"600"}],
+                        "headline-md":["24px",{lineHeight:"32px",letterSpacing:"-0.01em",fontWeight:"600"}],
+                        "headline-sm":["20px",{lineHeight:"28px",fontWeight:"600"}],
+                        "title-md":["16px",{lineHeight:"24px",fontWeight:"500"}],
+                        "body-md":["14px",{lineHeight:"20px",fontWeight:"400"}],
+                        "caption":["12px",{lineHeight:"16px",fontWeight:"400"}],
+                        "body-lg":["16px",{lineHeight:"24px",fontWeight:"400"}],
+                        "label-md":["12px",{lineHeight:"16px",letterSpacing:"0.05em",fontWeight:"600"}]
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+<body class="flex h-screen overflow-hidden antialiased font-body-md text-body-md">
+
+<!-- ========== Side Navigation ========== -->
+<nav id="side-nav" class="bg-surface w-[232px] h-screen fixed left-0 top-0 border-r border-outline-variant flex flex-col py-stack_lg z-20">
+    <div class="px-stack_lg mb-stack_lg">
+        <div class="flex items-center gap-stack_sm">
+            <img class="w-10 h-10 rounded-full object-cover shadow-sm" alt="Aisha Rahman" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDWl9MZUMs3GhKrFHY_jNyRhdR9AjrOBlbTVU9g-T4-y14mr2JjmGAQO5NQDr2LmXIuAwHsubMhWupcPNugRE57dzyokf0HSnyyO3o7FAc7AbDZDLUD8IOtoK56Y02Ig1Waem1WD6DLFHwVK8XsDLtjd-1q-FBE1EFI81jte39tCLWO6LOfBFIMJPwFTjR81gOaI3YijA_JQoMtCHt7xtnBjC9N3BqAYg1AZtXsMekO_31OY3V_fMjq" />
+            <div>
+                <h1 class="font-headline-sm text-headline-sm font-black text-primary">CaseReady AI</h1>
+                <p class="font-caption text-caption text-on-surface-variant">Burjeel Hospital, Abu Dhabi</p>
+            </div>
+        </div>
+    </div>
+    <button class="mx-container_padding mb-stack_lg bg-primary text-on-primary font-label-md text-label-md py-2 px-4 rounded-full hover:bg-primary-container transition-colors flex items-center justify-center gap-2">
+        <span class="material-symbols-outlined" style="font-size: 18px;">add</span>
+        New Case Request
+    </button>
+    <ul class="flex-1 overflow-y-auto">
+        <li><a data-nav="Command Centre" class="flex items-center gap-3 px-container_padding py-3 text-on-surface-variant hover:bg-surface-container-high transition-colors" href="index.html">
+            <span class="material-symbols-outlined">dashboard</span>
+            <span class="font-body-md text-body-md">Command Centre</span>
+        </a></li>
+        <li><a data-nav="Surgical Cases" class="flex items-center gap-3 px-container_padding py-3 text-on-surface-variant hover:bg-surface-container-high transition-colors" href="#">
+            <span class="material-symbols-outlined">clinical_notes</span>
+            <span class="font-body-md text-body-md">Surgical Cases</span>
+        </a></li>
+        <li><a data-nav="Action Centre" class="flex items-center gap-3 px-container_padding py-3 transition-colors" href="action-centre.html">
+            <span class="material-symbols-outlined">pending_actions</span>
+            <span class="font-body-md text-body-md">Action Centre</span>
+        </a></li>
+        <li><a data-nav="Slot Rescue" class="flex items-center gap-3 px-container_padding py-3 text-on-surface-variant hover:bg-surface-container-high transition-colors" href="slot-rescue.html">
+            <span class="material-symbols-outlined">published_with_changes</span>
+            <span class="font-body-md text-body-md">Slot Rescue</span>
+        </a></li>
+        <li><a data-nav="Audit Trail" class="flex items-center gap-3 px-container_padding py-3 text-on-surface-variant hover:bg-surface-container-high transition-colors" href="audit-trail.html">
+            <span class="material-symbols-outlined">history</span>
+            <span class="font-body-md text-body-md">Audit Trail</span>
+        </a></li>
+        <li><a data-nav="Analytics" class="flex items-center gap-3 px-container_padding py-3 text-on-surface-variant hover:bg-surface-container-high transition-colors" href="#">
+            <span class="material-symbols-outlined">analytics</span>
+            <span class="font-body-md text-body-md">Analytics</span>
+        </a></li>
+        <li><a data-nav="Settings" class="flex items-center gap-3 px-container_padding py-3 text-on-surface-variant hover:bg-surface-container-high transition-colors" href="#">
+            <span class="material-symbols-outlined">settings</span>
+            <span class="font-body-md text-body-md">Settings</span>
+        </a></li>
+    </ul>
+    <div class="mt-auto px-container_padding border-t border-outline-variant pt-stack_sm">
+        <a class="flex items-center gap-3 py-2 text-on-surface-variant hover:bg-surface-container-high transition-colors rounded-lg px-2 -mx-2" href="#"><span class="material-symbols-outlined">help</span><span class="font-body-md text-body-md">Help</span></a>
+        <a class="flex items-center gap-3 py-2 text-on-surface-variant hover:bg-surface-container-high transition-colors rounded-lg px-2 -mx-2" href="#"><span class="material-symbols-outlined">contact_support</span><span class="font-body-md text-body-md">Support</span></a>
+    </div>
+</nav>
+
+<!-- ========== Main Content ========== -->
+<div class="flex-1 flex flex-col ml-[232px] w-[calc(100%-232px)]">
+
+    <!-- Top Nav Bar -->
+    <header class="bg-surface-container-low h-[68px] fixed top-0 right-0 w-[calc(100%-232px)] border-b border-outline-variant flex justify-between items-center px-container_padding z-10">
+        <div class="flex items-center gap-stack_lg">
+            <h2 class="font-headline-sm text-headline-sm font-black text-primary hidden lg:block">CaseReady AI</h2>
+            <nav class="flex gap-stack_md font-label-md text-label-md">
+                <a class="text-on-surface-variant hover:text-primary transition-all py-2" href="#">Cases</a>
+                <a class="text-on-surface-variant hover:text-primary transition-all py-2" href="#">Metrics</a>
+                <a class="text-on-surface-variant hover:text-primary transition-all py-2" href="#">Inventory</a>
+            </nav>
+        </div>
+        <div class="flex items-center gap-stack_md">
+            <span class="font-label-md text-label-md text-on-surface-variant flex items-center gap-2">
+                <span class="w-2 h-2 rounded-full bg-tertiary-fixed pulse-dot"></span>
+                System Status: Active
+            </span>
+            <div class="flex items-center gap-2 border-l border-outline-variant pl-stack_md ml-2">
+                <button class="p-2 text-on-surface-variant hover:bg-surface-container-high rounded-full transition-colors"><span class="material-symbols-outlined">notifications</span></button>
+                <button class="p-2 text-on-surface-variant hover:bg-surface-container-high rounded-full transition-colors"><span class="material-symbols-outlined">help</span></button>
+                <button class="p-2 text-on-surface-variant hover:bg-surface-container-high rounded-full transition-colors"><span class="material-symbols-outlined">language</span></button>
+            </div>
+            <img class="w-8 h-8 rounded-full object-cover shadow-sm ml-stack_sm cursor-pointer border border-outline-variant hover:border-primary transition-colors" alt="Aisha Rahman" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDmNAQuTMxB1PlfJqM4pRgA5_7zb9wMFtALODjk1G_rTFv1eQr4e2z62Sjt4Tk5_a-opgI9rQnniZI0NZf-CFdb4IxyyQEPS2K1Devk3sk5o75H85BboCSAkrgOwz8uA8WR9O-XvTY-64suYwxrkZBHcnVNwUGJ0g5_zqMB46WZGNWONUb6DZS7LvcZA0Q8CWCXEg0yT3vwmi5XOAHVRgYhE196Zpw7QFGpGWbpByVNl3ow_tMfL1ss" />
+        </div>
+    </header>
+
+    <!-- Canvas -->
+    <main class="flex-1 overflow-y-auto mt-[68px] bg-background">
+        <div class="px-container_padding pt-stack_lg pb-stack_md">
+            <h2 class="font-headline-md text-headline-md text-on-surface mb-1">Action Centre</h2>
+            <p class="font-body-lg text-body-lg text-on-surface-variant">Resolve surgical-readiness blockers before they become cancellations.</p>
+        </div>
+
+        <!-- Tabs -->
+        <div class="px-container_padding border-b border-outline-variant flex gap-stack_md overflow-x-auto no-scrollbar" data-tab-group="action-tabs">
+            <button data-tab="my-actions" class="font-label-md text-label-md text-primary border-b-2 border-primary py-3 whitespace-nowrap">My actions</button>
+            <button data-tab="all-actions" class="font-label-md text-label-md text-on-surface-variant hover:text-primary py-3 whitespace-nowrap transition-colors">All actions</button>
+            <button data-tab="awaiting" class="font-label-md text-label-md text-on-surface-variant hover:text-primary py-3 whitespace-nowrap transition-colors flex items-center gap-1">Awaiting approval <span class="bg-primary text-on-primary text-[10px] px-1.5 py-0.5 rounded-full">3</span></button>
+            <button data-tab="overdue" class="font-label-md text-label-md text-on-surface-variant hover:text-primary py-3 whitespace-nowrap transition-colors flex items-center gap-1">Overdue <span class="bg-error text-on-error text-[10px] px-1.5 py-0.5 rounded-full">1</span></button>
+            <button data-tab="completed" class="font-label-md text-label-md text-on-surface-variant hover:text-primary py-3 whitespace-nowrap transition-colors">Completed</button>
+        </div>
+
+        <!-- Action Table -->
+        <div class="px-container_padding py-stack_lg" data-tab-panel="action-tabs" data-tab-id="my-actions">
+            <div class="bg-surface-container-lowest border border-outline-variant rounded-lg shadow-sm overflow-hidden">
+                <!-- IMMEDIATE Section -->
+                <div class="border-b border-outline-variant">
+                    <div class="px-stack_md py-2 bg-error-container/30 flex items-center gap-2">
+                        <span class="material-symbols-outlined text-error" style="font-size:16px;">priority_high</span>
+                        <span class="font-label-md text-label-md text-error uppercase tracking-wider">Immediate</span>
+                    </div>
+                    <!-- Table Header -->
+                    <div class="grid grid-cols-12 gap-2 px-stack_md py-2 bg-surface-container border-b border-outline-variant">
+                        <span class="col-span-2 font-label-md text-label-md text-on-surface-variant">Case ID</span>
+                        <span class="col-span-3 font-label-md text-label-md text-on-surface-variant">Procedure</span>
+                        <span class="col-span-4 font-label-md text-label-md text-on-surface-variant">Action Required</span>
+                        <span class="col-span-3 font-label-md text-label-md text-on-surface-variant">Deadline</span>
+                    </div>
+                    <!-- Row 1 - selected/active -->
+                    <div data-open-panel="review-panel" class="grid grid-cols-12 gap-2 px-stack_md py-3 border-b border-outline-variant bg-primary-fixed/20 hover:bg-primary-fixed/30 transition-colors cursor-pointer group">
+                        <div class="col-span-2">
+                            <span class="font-title-md text-title-md text-primary font-semibold">#CR-902</span>
+                        </div>
+                        <div class="col-span-3">
+                            <span class="font-body-md text-body-md text-on-surface">CABG x3</span>
+                        </div>
+                        <div class="col-span-4 flex items-center gap-2">
+                            <span class="material-symbols-outlined text-on-surface-variant" style="font-size:18px;">mark_email_unread</span>
+                            <span class="font-body-md text-body-md text-on-surface">Review AI Patient Comms</span>
+                        </div>
+                        <div class="col-span-3">
+                            <span class="font-body-md text-body-md text-on-surface-variant">Pre-Admissions</span>
+                        </div>
+                    </div>
+                    <!-- Row 2 -->
+                    <div class="grid grid-cols-12 gap-2 px-stack_md py-3 border-b border-outline-variant hover:bg-surface-container-low transition-colors cursor-pointer">
+                        <div class="col-span-2">
+                            <span class="font-title-md text-title-md text-on-surface">#CR-905</span>
+                        </div>
+                        <div class="col-span-3">
+                            <span class="font-body-md text-body-md text-on-surface">Knee Arthroplasty</span>
+                        </div>
+                        <div class="col-span-4 flex items-center gap-2">
+                            <span class="material-symbols-outlined text-on-surface-variant" style="font-size:18px;">inventory</span>
+                            <span class="font-body-md text-body-md text-on-surface">Verify Implant Delivery</span>
+                        </div>
+                        <div class="col-span-3">
+                            <span class="font-body-md text-body-md text-on-surface-variant">Procurement</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- DUE TODAY Section -->
+                <div class="border-b border-outline-variant">
+                    <div class="px-stack_md py-2 bg-secondary-container/30 flex items-center gap-2">
+                        <span class="material-symbols-outlined text-secondary" style="font-size:16px;">today</span>
+                        <span class="font-label-md text-label-md text-secondary uppercase tracking-wider">Due Today</span>
+                    </div>
+                    <div class="grid grid-cols-12 gap-2 px-stack_md py-3 border-b border-outline-variant hover:bg-surface-container-low transition-colors cursor-pointer">
+                        <div class="col-span-2">
+                            <span class="font-title-md text-title-md text-on-surface">#CR-881</span>
+                        </div>
+                        <div class="col-span-3">
+                            <span class="font-body-md text-body-md text-on-surface">Laparoscopic Chole...</span>
+                        </div>
+                        <div class="col-span-4 flex items-center gap-2">
+                            <span class="material-symbols-outlined text-on-surface-variant" style="font-size:18px;">task</span>
+                            <span class="font-body-md text-body-md text-on-surface">Approve Consent Form</span>
+                        </div>
+                        <div class="col-span-3">
+                            <span class="font-body-md text-body-md text-on-surface-variant">Surgical Consent</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- UPCOMING Section -->
+                <div>
+                    <div class="px-stack_md py-2 bg-surface-container flex items-center gap-2">
+                        <span class="material-symbols-outlined text-on-surface-variant" style="font-size:16px;">upcoming</span>
+                        <span class="font-label-md text-label-md text-on-surface-variant uppercase tracking-wider">Upcoming</span>
+                    </div>
+                    <div class="grid grid-cols-12 gap-2 px-stack_md py-3 hover:bg-surface-container-low transition-colors cursor-pointer">
+                        <div class="col-span-2">
+                            <span class="font-title-md text-title-md text-on-surface">#CR-912</span>
+                        </div>
+                        <div class="col-span-3">
+                            <span class="font-body-md text-body-md text-on-surface">Craniotomy</span>
+                        </div>
+                        <div class="col-span-4 flex items-center gap-2">
+                            <span class="material-symbols-outlined text-on-surface-variant" style="font-size:18px;">biotech</span>
+                            <span class="font-body-md text-body-md text-on-surface">Pre-Op Lab Review</span>
+                        </div>
+                        <div class="col-span-3">
+                            <span class="font-body-md text-body-md text-on-surface-variant">Anaesthesia</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Other tab panels (placeholder) -->
+        <div data-tab-panel="action-tabs" data-tab-id="all-actions" class="hidden px-container_padding py-stack_lg">
+            <div class="p-stack_lg text-center text-on-surface-variant">
+                <span class="material-symbols-outlined text-[48px] mb-2 block">list_alt</span>
+                <p class="font-body-lg text-body-lg">All team actions will appear here.</p>
+            </div>
+        </div>
+        <div data-tab-panel="action-tabs" data-tab-id="awaiting" class="hidden px-container_padding py-stack_lg">
+            <div class="p-stack_lg text-center text-on-surface-variant">
+                <span class="material-symbols-outlined text-[48px] mb-2 block">hourglass_top</span>
+                <p class="font-body-lg text-body-lg">3 actions awaiting your approval.</p>
+            </div>
+        </div>
+        <div data-tab-panel="action-tabs" data-tab-id="overdue" class="hidden px-container_padding py-stack_lg">
+            <div class="p-stack_lg text-center text-on-surface-variant">
+                <span class="material-symbols-outlined text-[48px] mb-2 block">warning</span>
+                <p class="font-body-lg text-body-lg">1 overdue action requiring attention.</p>
+            </div>
+        </div>
+        <div data-tab-panel="action-tabs" data-tab-id="completed" class="hidden px-container_padding py-stack_lg">
+            <div class="p-stack_lg text-center text-on-surface-variant">
+                <span class="material-symbols-outlined text-[48px] mb-2 block">task_alt</span>
+                <p class="font-body-lg text-body-lg">Completed actions archive.</p>
+            </div>
+        </div>
+    </main>
+</div>
+
+<!-- ========== Review Communication Panel (Slide-over) ========== -->
+<div class="panel-overlay fixed inset-0 bg-black/30 z-30" data-overlay-for="review-panel"></div>
+<div id="review-panel" class="slide-panel fixed top-0 right-0 h-full w-[440px] max-w-full bg-surface-container-lowest border-l border-outline-variant shadow-xl z-40 flex flex-col">
+    <!-- Panel Header -->
+    <div class="flex items-center justify-between px-container_padding py-4 border-b border-outline-variant bg-surface shrink-0">
+        <div class="flex items-center gap-3">
+            <div class="w-10 h-10 rounded-full bg-primary-container flex items-center justify-center">
+                <span class="material-symbols-outlined text-inverse-primary" style="font-size:20px;">forward_to_inbox</span>
+            </div>
+            <div>
+                <h3 class="font-title-md text-title-md text-on-surface font-semibold">Review Communication</h3>
+                <p class="font-caption text-caption text-on-surface-variant">Case #CR-902 • Pre-Admissions</p>
+            </div>
+        </div>
+        <button data-close-panel="review-panel" class="p-1 text-on-surface-variant hover:text-primary transition-colors rounded-full hover:bg-surface-container-high">
+            <span class="material-symbols-outlined">close</span>
+        </button>
+    </div>
+
+    <!-- Panel Content -->
+    <div class="flex-1 overflow-y-auto">
+        <!-- Intent Block -->
+        <div class="px-container_padding py-stack_md border-b border-outline-variant bg-surface-container-low">
+            <div class="flex items-start gap-2">
+                <span class="material-symbols-outlined text-on-surface-variant mt-0.5" style="font-size:18px;">info</span>
+                <div>
+                    <p class="font-body-md text-body-md text-on-surface"><strong>Intent:</strong> Confirm patient understanding of pre-op medication instructions (Aspirin cessation).</p>
+                    <p class="font-caption text-caption text-on-surface-variant mt-1">Recipient prefers WhatsApp communication. Bilingual requested.</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- AI Drafted Message -->
+        <div class="px-container_padding py-stack_lg">
+            <h4 class="font-label-md text-label-md text-on-surface-variant uppercase tracking-wider mb-stack_md">AI Drafted Message</h4>
+
+            <!-- English version -->
+            <div class="border border-outline-variant rounded-lg p-stack_md mb-stack_md bg-surface-container-lowest shadow-sm">
+                <span class="inline-block font-label-md text-label-md text-on-primary bg-primary px-2 py-0.5 rounded mb-2">ENGLISH</span>
+                <p class="font-body-lg text-body-lg text-on-surface leading-relaxed">
+                    Hello, this is the pre-admission team regarding your upcoming procedure. Please confirm that you have received and understood your medication instructions.
+                </p>
+            </div>
+
+            <!-- Arabic version -->
+            <div class="border border-outline-variant rounded-lg p-stack_md bg-surface-container-lowest shadow-sm">
+                <div class="flex justify-end mb-2">
+                    <span class="inline-block font-label-md text-label-md text-on-surface-variant bg-surface-variant px-2 py-0.5 rounded">ARABIC</span>
+                </div>
+                <p class="font-body-lg text-body-lg text-on-surface leading-relaxed text-right" dir="rtl">
+                    مرحباً، هذا فريق ما قبل الإدخال بخصوص عمليتكم الجراحية القادمة. يرجى تأكيد استلامكم وفهمكم لتعليمات الأدوية.
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Panel Footer -->
+    <div class="border-t border-outline-variant px-container_padding py-stack_md bg-surface shrink-0">
+        <p class="font-caption text-caption text-on-surface-variant mb-stack_md flex items-center gap-1.5">
+            <span class="material-symbols-outlined" style="font-size:14px;">auto_awesome</span>
+            Drafted by AI · Edited by Aisha Rahman · Not yet sent
+        </p>
+        <div class="flex items-center justify-between">
+            <button class="flex items-center gap-1.5 px-3 py-2 text-on-surface-variant hover:text-primary font-label-md text-label-md transition-colors">
+                <span class="material-symbols-outlined" style="font-size:16px;">edit</span> Edit
+            </button>
+            <div class="flex gap-2">
+                <button class="px-4 py-2 border border-error text-error rounded-lg font-label-md text-label-md hover:bg-error-container transition-colors">
+                    Return for review
+                </button>
+                <button class="px-4 py-2 bg-primary text-on-primary rounded-lg font-label-md text-label-md hover:bg-primary-container transition-colors flex items-center gap-1.5">
+                    <span class="material-symbols-outlined" style="font-size:16px;">send</span> Approve and send
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="shared.js"></script>
+</body>
+</html>
