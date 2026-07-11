@@ -3,6 +3,7 @@ import { systemSettings } from "@/db/schema";
 import { eq } from "drizzle-orm";
 import { redirect } from "next/navigation";
 import { auth } from "@/auth";
+import { isDemoMode } from "@/lib/env";
 import SettingsClient from "./SettingsClient";
 
 export default async function SettingsPage() {
@@ -23,6 +24,7 @@ export default async function SettingsPage() {
       warningThreshold={warningThreshold}
       criticalThreshold={criticalThreshold}
       userRole={session.user?.role || "coordinator"}
+      demoMode={isDemoMode()}
     />
   );
 }

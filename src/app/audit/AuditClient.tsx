@@ -133,10 +133,10 @@ export default function AuditClient({
                   >
                     <td className="py-4 px-4 align-top">
                       <p className="font-title-md text-title-md text-on-surface">
-                        {new Date(evt.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                        {formatTime(evt.createdAt)}
                       </p>
                       <p className="font-caption text-caption text-on-surface-variant">
-                        {new Date(evt.createdAt).toLocaleDateString()}
+                        {formatDate(evt.createdAt)}
                       </p>
                     </td>
                     <td className="py-4 px-4 align-top">
@@ -278,4 +278,12 @@ export default function AuditClient({
       </div>
     </main>
   );
+}
+
+function formatTime(value: string) {
+  return new Date(value).toISOString().slice(11, 16);
+}
+
+function formatDate(value: string) {
+  return new Date(value).toISOString().slice(0, 10);
 }

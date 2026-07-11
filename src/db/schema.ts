@@ -1,6 +1,15 @@
 import { sqliteTable, text, integer } from "drizzle-orm/sqlite-core";
 import { sql } from "drizzle-orm";
 
+export type RequirementStatus =
+  | "completed"
+  | "pending"
+  | "missing"
+  | "overdue"
+  | "blocked"
+  | "clinical_review"
+  | "not_applicable";
+
 export const users = sqliteTable("users", {
   id: text("id").primaryKey(),
   email: text("email").notNull().unique(),

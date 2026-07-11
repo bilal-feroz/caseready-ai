@@ -101,7 +101,7 @@ export default async function DashboardPage({ searchParams }: PageProps) {
       <div className="flex flex-col md:flex-row justify-between items-start md:items-end mb-stack_lg gap-stack_md">
         <div>
           <h2 className="font-display-lg text-display-lg text-on-surface mb-stack_sm">Good morning, {session.user?.name}</h2>
-          <p className="font-body-lg text-body-lg text-on-surface-variant">Here is tomorrow's surgical readiness across {scheduledCount} cases.</p>
+          <p className="font-body-lg text-body-lg text-on-surface-variant">Here is tomorrow&apos;s surgical readiness across {scheduledCount} cases.</p>
         </div>
         <div className="flex items-center gap-stack_md">
           <div className="flex items-center gap-2 bg-surface-container-lowest px-4 py-2 border border-outline-variant rounded-lg shadow-sm">
@@ -128,7 +128,7 @@ export default async function DashboardPage({ searchParams }: PageProps) {
             <span className="material-symbols-outlined clinical-teal-text">check_circle</span>
             <span className="font-headline-md text-headline-md clinical-teal-text">{readyCount}</span>
           </div>
-          <span class="font-label-md text-label-md clinical-teal-text uppercase mt-1">Ready</span>
+          <span className="font-label-md text-label-md clinical-teal-text uppercase mt-1">Ready</span>
         </div>
         <div className="flex-1 px-container_padding py-4 flex flex-col justify-center items-center clinical-amber-bg group hover:brightness-95 transition-all cursor-pointer">
           <div className="flex items-center gap-2">
@@ -155,12 +155,12 @@ export default async function DashboardPage({ searchParams }: PageProps) {
         {/* Left: Tomorrow's Operating List */}
         <div className="xl:col-span-7 bg-surface-container-lowest border border-outline-variant rounded-xl shadow-sm flex flex-col overflow-hidden h-[800px]">
           <div className="px-container_padding py-stack_md border-b border-outline-variant flex justify-between items-center bg-surface bg-surface-bright">
-            <h3 className="font-headline-sm text-headline-sm text-on-surface">Tomorrow's Operating List</h3>
+            <h3 className="font-headline-sm text-headline-sm text-on-surface">Tomorrow&apos;s Operating List</h3>
             <div className="flex gap-2">
-              <button className="p-1 text-on-surface-variant hover:text-primary transition-colors">
+              <button type="button" disabled title="Not included in this demonstration." className="p-1 text-on-surface-variant/50 cursor-not-allowed transition-colors">
                 <span className="material-symbols-outlined">filter_list</span>
               </button>
-              <button className="p-1 text-on-surface-variant hover:text-primary transition-colors">
+              <button type="button" disabled title="Not included in this demonstration." className="p-1 text-on-surface-variant/50 cursor-not-allowed transition-colors">
                 <span className="material-symbols-outlined">more_vert</span>
               </button>
             </div>
@@ -201,7 +201,7 @@ export default async function DashboardPage({ searchParams }: PageProps) {
               </thead>
               <tbody className="divide-y divide-outline-variant font-body-md text-body-md text-on-surface bg-surface-container-lowest">
                 {allCases.map((c) => {
-                  const startTime = new Date(c.scheduledStart).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false });
+                  const startTime = new Date(c.scheduledStart).toISOString().slice(11, 16);
                   
                   let barColorClass = "clinical-teal-bg";
                   let statusBg = "clinical-teal-bg clinical-teal-text";
@@ -337,7 +337,7 @@ export default async function DashboardPage({ searchParams }: PageProps) {
             <span className="material-symbols-outlined text-inverse-primary" style={{ fontSize: "28px" }}>auto_awesome</span>
             <div>
               <h4 className="font-title-md text-title-md text-inverse-primary mb-1">AI Insight Generated</h4>
-              <p className="font-body-md text-body-md text-primary-fixed">CaseReady found {attentionItems.length} actions that may prevent cancellations across tomorrow's schedule.</p>
+              <p className="font-body-md text-body-md text-primary-fixed">CaseReady found {attentionItems.length} actions that may prevent cancellations across tomorrow&apos;s schedule.</p>
             </div>
           </div>
         </div>

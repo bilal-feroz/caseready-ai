@@ -6,6 +6,8 @@ import { eq, and } from "drizzle-orm";
 import { calculateReadiness } from "@/lib/readiness";
 import { auth } from "@/auth";
 import { revalidatePath } from "next/cache";
+import { execSync } from "node:child_process";
+import { isDemoMode } from "@/lib/env";
 
 // Helper to check user authorization
 async function requireAuth() {
@@ -366,12 +368,12 @@ export async function resetDemoData() {
   if (user.role !== "administrator") {
     throw new Error("Forbidden");
   }
+  if (!isDemoMode()) {
+    throw new Error("Demo data reset is disabled unless DEMO_MODE=true");
+  }
 
-  // Run the seeder logic programmatically
-  // We can just call db:seed logic by running seed.mjs script
-  const { execSync } = require("child_process");
   try {
-    execSync("npm run db:seed");
+    execSync("npm run db:seed", { stdio: "inherit" });
     return { success: true };
   } catch (err) {
     console.error(err);

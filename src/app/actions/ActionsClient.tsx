@@ -278,7 +278,7 @@ export default function ActionsClient({
                 AI-drafted bilingual message checklist.
               </p>
               <div className="flex items-center justify-between">
-                <button className="flex items-center gap-1.5 px-3 py-2 text-on-surface-variant hover:text-primary font-label-md text-label-md transition-colors">
+                <button type="button" disabled title="Not included in this demonstration." className="flex items-center gap-1.5 px-3 py-2 text-on-surface-variant/50 cursor-not-allowed font-label-md text-label-md transition-colors">
                   <span className="material-symbols-outlined" style={{ fontSize: "16px" }}>edit</span> Edit
                 </button>
                 <div className="flex gap-2">

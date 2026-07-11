@@ -9,7 +9,7 @@ interface SideNavProps {
     name?: string | null;
     email?: string | null;
     role?: string;
-    department?: string;
+    department?: string | null;
   } | null;
 }
 
@@ -30,6 +30,9 @@ export default function SideNav({ user }: SideNavProps) {
     await signOut({ callbackUrl: "/login" });
   };
 
+  const openHelp = () => window.dispatchEvent(new Event("caseready:help"));
+  const openSupport = () => window.dispatchEvent(new Event("caseready:support"));
+
   return (
     <nav className="w-[232px] h-screen fixed left-0 top-0 bg-surface border-r border-outline-variant flex flex-col py-stack_lg z-20">
       <div className="px-container_padding mb-stack_lg">
@@ -43,7 +46,12 @@ export default function SideNav({ user }: SideNavProps) {
           </div>
         </div>
       </div>
-      <button className="mx-container_padding mb-stack_lg bg-primary text-on-primary font-label-md text-label-md py-2 px-4 rounded-full hover:bg-primary-container transition-colors flex items-center justify-center gap-2">
+      <button
+        type="button"
+        disabled
+        title="Not included in this demonstration."
+        className="mx-container_padding mb-stack_lg bg-primary/40 text-on-primary font-label-md text-label-md py-2 px-4 rounded-full cursor-not-allowed flex items-center justify-center gap-2"
+      >
         <span className="material-symbols-outlined" style={{ fontSize: "18px" }}>add</span>
         New Case Request
       </button>
@@ -70,14 +78,22 @@ export default function SideNav({ user }: SideNavProps) {
         })}
       </ul>
       <div className="mt-auto px-container_padding border-t border-outline-variant pt-stack_sm">
-        <a className="flex items-center gap-3 py-2 text-on-surface-variant hover:bg-surface-container-high transition-colors rounded-lg px-2 -mx-2" href="#">
+        <button
+          type="button"
+          onClick={openHelp}
+          className="w-full flex items-center gap-3 py-2 text-on-surface-variant hover:bg-surface-container-high transition-colors rounded-lg px-2 -mx-2 text-left"
+        >
           <span className="material-symbols-outlined">help</span>
           <span className="font-body-md text-body-md">Help</span>
-        </a>
-        <a className="flex items-center gap-3 py-2 text-on-surface-variant hover:bg-surface-container-high transition-colors rounded-lg px-2 -mx-2" href="#">
+        </button>
+        <button
+          type="button"
+          onClick={openSupport}
+          className="w-full flex items-center gap-3 py-2 text-on-surface-variant hover:bg-surface-container-high transition-colors rounded-lg px-2 -mx-2 text-left"
+        >
           <span className="material-symbols-outlined">contact_support</span>
           <span className="font-body-md text-body-md">Support</span>
-        </a>
+        </button>
         <button
           onClick={handleLogout}
           className="w-full flex items-center gap-3 py-2 mt-2 text-error hover:bg-red-50 transition-colors rounded-lg px-2 -mx-2 text-left"

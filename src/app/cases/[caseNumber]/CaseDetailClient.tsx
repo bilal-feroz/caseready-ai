@@ -41,6 +41,9 @@ export default function CaseDetailClient({
   const completedCount = requirements.filter(r => r.status === "completed" || r.status === "not_applicable").length;
   const blockerCount = requirements.filter(r => r.status === "blocked" || r.status === "overdue" || r.status === "missing").length;
   const reviewCount = requirements.filter(r => r.status === "clinical_review" || r.status === "pending").length;
+  const surgeonDisplayName = sCase.surgeonName?.startsWith("Dr.")
+    ? sCase.surgeonName
+    : `Dr. ${sCase.surgeonName}`;
 
   const handleEvidenceAction = async (status: "acknowledged" | "flagged_incorrect") => {
     if (!selectedEvidence) return;
@@ -139,7 +142,7 @@ export default function CaseDetailClient({
                 </div>
                 <div>
                   <p className="font-caption text-caption text-on-surface-variant">Primary Surgeon</p>
-                  <p className="font-title-md text-title-md text-on-surface">Dr. {sCase.surgeonName}</p>
+                  <p className="font-title-md text-title-md text-on-surface">{surgeonDisplayName}</p>
                 </div>
               </div>
               <div className="w-px h-10 bg-outline-variant hidden md:block"></div>
@@ -169,9 +172,9 @@ export default function CaseDetailClient({
             {/* Status Strip */}
             <div className="flex items-center gap-4 mb-stack_md font-body-md text-body-md flex-wrap">
               <span className="flex items-center gap-1.5 clinical-teal-text"><span className="material-symbols-outlined" style={{ fontSize: "18px" }}>check_circle</span> {completedCount} Completed</span>
-              <span className="text-outline-variant">•</span>
-              <span className="flex items-center gap-1.5 clinical-red-text"><span class="material-symbols-outlined" style={{ fontSize: "18px" }}>block</span> {blockerCount} Unresolved Blockers</span>
-              <span className="text-outline-variant">•</span>
+              <span className="text-outline-variant">&middot;</span>
+              <span className="flex items-center gap-1.5 clinical-red-text"><span className="material-symbols-outlined" style={{ fontSize: "18px" }}>block</span> {blockerCount} Unresolved Blockers</span>
+              <span className="text-outline-variant">&middot;</span>
               <span className="flex items-center gap-1.5 text-on-surface-variant"><span className="material-symbols-outlined" style={{ fontSize: "18px" }}>rate_review</span> {reviewCount} Reviews Pending</span>
             </div>
 
@@ -224,7 +227,7 @@ export default function CaseDetailClient({
                             {getStatusIcon(req.status)}
                             <div className="flex-1 min-w-0">
                               <p className="font-title-md text-title-md text-on-surface capitalize">
-                                {req.requirementType.replace(/_/g, " ")}
+                                {formatRequirementType(req.requirementType)}
                               </p>
                               {req.notes && <p className="font-caption text-caption text-on-surface-variant">{req.notes}</p>}
                             </div>
@@ -270,7 +273,7 @@ export default function CaseDetailClient({
                       <p className="font-title-md text-on-surface font-semibold capitalize">{evt.eventType.replace(/_/g, " ")}</p>
                       <p className="font-body-md text-on-surface-variant mt-0.5">{evt.reason}</p>
                       <p className="font-caption text-caption text-on-surface-variant mt-1">
-                        {new Date(evt.createdAt).toLocaleString()}
+                        {formatDateTime(evt.createdAt)}
                       </p>
                     </div>
                   ))}
@@ -289,7 +292,7 @@ export default function CaseDetailClient({
                       <div key={doc.id} className="border border-outline-variant rounded-lg p-stack_md flex items-center justify-between hover:bg-surface-container-low transition-colors">
                         <div>
                           <p className="font-title-md font-semibold text-on-surface">{doc.title}</p>
-                          <p className="font-caption text-caption text-on-surface-variant">{doc.documentType} • Confidence: {doc.confidence}%</p>
+                          <p className="font-caption text-caption text-on-surface-variant">{doc.documentType} &middot; Confidence: {doc.confidence}%</p>
                         </div>
                         <button
                           onClick={() => {
@@ -351,7 +354,7 @@ export default function CaseDetailClient({
                     {audit.map((evt) => (
                       <tr key={evt.id} className="border-b border-outline-variant hover:bg-surface-container-low transition-colors">
                         <td className="py-3 px-4 font-caption text-caption text-on-surface-variant">
-                          {new Date(evt.createdAt).toLocaleString()}
+                          {formatDateTime(evt.createdAt)}
                         </td>
                         <td className="py-3 px-4">
                           <p className="font-title-md text-on-surface font-semibold capitalize">{evt.eventType.replace(/_/g, " ")}</p>
@@ -397,7 +400,7 @@ export default function CaseDetailClient({
                   </div>
                   <div className="text-right">
                     <p className="font-caption text-caption text-on-surface-variant">Extracted On</p>
-                    <p className="font-body-md text-body-md text-on-surface">{new Date(selectedEvidence.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</p>
+                    <p className="font-body-md text-body-md text-on-surface">{formatTime(selectedEvidence.createdAt)}</p>
                   </div>
                 </div>
 
@@ -454,4 +457,27 @@ export default function CaseDetailClient({
       </div>
     </div>
   );
+}
+
+function formatRequirementType(requirementType: string) {
+  const labels: Record<string, string> = {
+    identity_confirmed: "Identity Confirmed",
+    surgical_consent: "Surgical Consent",
+    anaesthesia_review: "Anaesthesia Review",
+    pre_op_labs: "Pre-op Labs",
+    insurance_authorization: "Insurance Authorization",
+  };
+
+  return labels[requirementType] ?? requirementType
+    .split("_")
+    .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+    .join(" ");
+}
+
+function formatDateTime(value: string) {
+  return new Date(value).toISOString().replace("T", " ").slice(0, 16);
+}
+
+function formatTime(value: string) {
+  return new Date(value).toISOString().slice(11, 16);
 }

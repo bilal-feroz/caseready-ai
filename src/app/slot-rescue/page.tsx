@@ -1,6 +1,6 @@
 import { db } from "@/db/client";
 import { operatingRoomSlots, standbyCandidates, surgicalCases, patients, surgeons, operatingRooms, replacementProposals } from "@/db/schema";
-import { eq, and } from "drizzle-orm";
+import { eq, inArray } from "drizzle-orm";
 import { redirect } from "next/navigation";
 import { auth } from "@/auth";
 import SlotRescueClient from "./SlotRescueClient";
@@ -11,7 +11,7 @@ export default async function SlotRescuePage() {
     redirect("/login");
   }
 
-  // 1. Fetch endangered OR slot
+  // 1. Fetch the active demo OR slot, including rescued status after officer approval.
   const [slot] = db
     .select({
       id: operatingRoomSlots.id,
@@ -29,7 +29,7 @@ export default async function SlotRescuePage() {
     .from(operatingRoomSlots)
     .innerJoin(operatingRooms, eq(operatingRoomSlots.operatingRoomId, operatingRooms.id))
     .innerJoin(surgicalCases, eq(operatingRoomSlots.originalCaseId, surgicalCases.id))
-    .where(eq(operatingRoomSlots.status, "endangered"))
+    .where(inArray(operatingRoomSlots.status, ["endangered", "rescued"]))
     .limit(1)
     .all();
 

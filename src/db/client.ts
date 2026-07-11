@@ -6,15 +6,25 @@ import fs from "fs";
 
 const dbPath = process.env.DATABASE_PATH || "./data/caseready.db";
 
-// Ensure the directory exists
 const dir = path.dirname(dbPath);
-if (!fs.existsSync(dir)) {
-  fs.mkdirSync(dir, { recursive: true });
+try {
+  if (!fs.existsSync(dir)) {
+    fs.mkdirSync(dir, { recursive: true });
+  }
+  fs.accessSync(dir, fs.constants.W_OK);
+} catch (err) {
+  throw new Error(`Database directory is not writable or cannot be created: ${path.resolve(dir)}`);
 }
 
-const sqlite = new Database(dbPath);
-// Enable WAL mode and foreign keys
-sqlite.pragma("journal_mode = WAL");
-sqlite.pragma("foreign_keys = ON");
+let sqlite: Database.Database;
+try {
+  sqlite = new Database(dbPath);
+  sqlite.pragma("journal_mode = WAL");
+  sqlite.pragma("foreign_keys = ON");
+  sqlite.pragma("busy_timeout = 5000");
+} catch (err) {
+  const message = err instanceof Error ? err.message : "Unknown SQLite error";
+  throw new Error(`Unable to open SQLite database at ${path.resolve(dbPath)}: ${message}`);
+}
 
 export const db = drizzle(sqlite, { schema });

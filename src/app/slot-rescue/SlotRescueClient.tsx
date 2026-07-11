@@ -116,9 +116,13 @@ export default function SlotRescueClient({
               </div>
             </div>
           </div>
-          <span className="inline-flex items-center gap-1.5 px-3 py-1.5 clinical-amber-bg clinical-amber-text font-label-md text-label-md rounded-lg border border-amber-200">
-            <span className="material-symbols-outlined" style={{ fontSize: "16px" }}>warning</span>
-            Status: Cancellation likely
+          <span className={`inline-flex items-center gap-1.5 px-3 py-1.5 font-label-md text-label-md rounded-lg border ${
+            slot.status === "rescued"
+              ? "clinical-teal-bg clinical-teal-text border-teal-200"
+              : "clinical-amber-bg clinical-amber-text border-amber-200"
+          }`}>
+            <span className="material-symbols-outlined" style={{ fontSize: "16px" }}>{slot.status === "rescued" ? "task_alt" : "warning"}</span>
+            Status: {slot.status === "rescued" ? "Rescued" : "Cancellation likely"}
           </span>
         </div>
       </div>
@@ -211,7 +215,7 @@ export default function SlotRescueClient({
               {/* AI Recommendation */}
               <div className="bg-primary-fixed/20 border border-primary-fixed rounded-lg p-stack_md mb-stack_md">
                 <p className="font-label-md text-label-md text-primary mb-1">Recommendation Summary</p>
-                <p className="font-body-md text-body-md text-on-surface italic">"{bestCandidate.rankingReason}"</p>
+                <p className="font-body-md text-body-md text-on-surface italic">&quot;{bestCandidate.rankingReason}&quot;</p>
               </div>
 
               {/* Stats */}
@@ -243,14 +247,14 @@ export default function SlotRescueClient({
                 <span className="material-symbols-outlined" style={{ fontSize: "16px" }}>star</span> Best Match
               </span>
               <button
-                disabled={loading}
+                disabled={loading || slot.status === "rescued"}
                 onClick={() => handlePropose(bestCandidate.caseId)}
                 className="w-full bg-primary text-on-primary font-label-md text-label-md py-2.5 rounded-lg hover:bg-primary-container transition-colors disabled:opacity-50"
               >
                 Propose replacement
               </button>
               <button
-                disabled={loading}
+                disabled={loading || slot.status === "rescued"}
                 onClick={handleRequestConfirmation}
                 className="w-full border border-outline-variant text-on-surface font-label-md text-label-md py-2.5 rounded-lg hover:border-primary hover:text-primary transition-colors disabled:opacity-50"
               >
@@ -266,8 +270,8 @@ export default function SlotRescueClient({
         <div className="px-container_padding py-stack_md border-b border-outline-variant flex justify-between items-center bg-surface bg-surface-bright">
           <h3 className="font-headline-sm text-headline-sm text-on-surface">Standby Candidates Comparison</h3>
           <div className="flex gap-2">
-            <button className="p-1 text-on-surface-variant hover:text-primary transition-colors"><span class="material-symbols-outlined">tune</span></button>
-            <button className="p-1 text-on-surface-variant hover:text-primary transition-colors"><span className="material-symbols-outlined">more_vert</span></button>
+            <button type="button" disabled title="Not included in this demonstration." className="p-1 text-on-surface-variant/50 cursor-not-allowed transition-colors"><span className="material-symbols-outlined">tune</span></button>
+            <button type="button" disabled title="Not included in this demonstration." className="p-1 text-on-surface-variant/50 cursor-not-allowed transition-colors"><span className="material-symbols-outlined">more_vert</span></button>
           </div>
         </div>
         <div className="overflow-x-auto">
@@ -311,7 +315,7 @@ export default function SlotRescueClient({
                     <td className="py-3 px-4">
                       {c.eligible ? (
                         <button
-                          disabled={loading}
+                          disabled={loading || slot.status === "rescued"}
                           onClick={() => handlePropose(c.caseId)}
                           className="px-2.5 py-1 text-xs bg-primary text-on-primary rounded hover:bg-primary-container transition-colors disabled:opacity-50"
                         >

@@ -2,5 +2,12 @@ node_modules
 .next
 data
 .env
+.env.*
 .git
 migrations
+coverage
+playwright-report
+test-results
+tsconfig.tsbuildinfo
+*.sqlite
+*.sqlite3

@@ -3,23 +3,27 @@ import * as schema from "../src/db/schema.ts";
 import bcrypt from "bcryptjs";
 
 async function main() {
+  if (process.env.DEMO_MODE === "false") {
+    throw new Error("Refusing to seed demo records because DEMO_MODE=false.");
+  }
+
   console.log("Seeding database...");
 
-  // Clear existing
-  db.delete(schema.users).run();
+  // Clear existing rows from child tables before parent tables.
+  db.delete(schema.replacementProposals).run();
+  db.delete(schema.standbyCandidates).run();
+  db.delete(schema.operatingRoomSlots).run();
+  db.delete(schema.communications).run();
+  db.delete(schema.actionItems).run();
+  db.delete(schema.evidenceDocuments).run();
+  db.delete(schema.readinessRequirements).run();
+  db.delete(schema.auditEvents).run();
+  db.delete(schema.systemSettings).run();
+  db.delete(schema.surgicalCases).run();
   db.delete(schema.patients).run();
   db.delete(schema.surgeons).run();
   db.delete(schema.operatingRooms).run();
-  db.delete(schema.surgicalCases).run();
-  db.delete(schema.readinessRequirements).run();
-  db.delete(schema.evidenceDocuments).run();
-  db.delete(schema.actionItems).run();
-  db.delete(schema.communications).run();
-  db.delete(schema.operatingRoomSlots).run();
-  db.delete(schema.standbyCandidates).run();
-  db.delete(schema.replacementProposals).run();
-  db.delete(schema.auditEvents).run();
-  db.delete(schema.systemSettings).run();
+  db.delete(schema.users).run();
 
   // Hash password
   const passwordHash = await bcrypt.hash("Demo123!", 10);

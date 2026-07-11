@@ -6,9 +6,12 @@ dist/
 .env.local
 .env.production
 data/*.db
+data/*.db-*
 *.sqlite
 *.sqlite3
+tsconfig.tsbuildinfo
 coverage/
 playwright-report/
 test-results/
+prod-start*.log
 .DS_Store

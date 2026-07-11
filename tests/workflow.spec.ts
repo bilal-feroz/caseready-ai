@@ -14,18 +14,22 @@ test("coordinator workflow", async ({ page }) => {
   await page.goto("http://localhost:3000/cases/CR-1051");
 
   // 3. Open evidence (clicks requirement pre-op labs row to show panel)
-  await page.click('text=Pre-op Labs');
+  await page.getByText("Pre-op Labs").click();
 
   // 4. Acknowledge evidence
-  await page.click('text=Acknowledge');
+  await page.getByRole("button", { name: "Acknowledge" }).click();
 
   // 5. Open Action Centre
   await page.goto("http://localhost:3000/actions");
 
   // 6. Approve one communication
-  await page.click('text=#CR-902');
-  await page.click('text=Approve and send');
+  await page.getByText("#CR-1002").click();
+  await page.getByRole("button", { name: /Approve and send/i }).click();
 
   // 7. Verification of success message
-  await expect(page.locator("text=draft approved")).toBeVisible();
+  await expect(page.getByText(/draft approved/i)).toBeVisible();
+
+  // 8. Audit event exists
+  await page.goto("http://localhost:3000/audit");
+  await expect(page.locator("tbody").getByText(/communication sent/i).first()).toBeVisible();
 });

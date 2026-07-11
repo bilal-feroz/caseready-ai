@@ -9,6 +9,7 @@ interface SettingsClientProps {
   warningThreshold: number;
   criticalThreshold: number;
   userRole: string;
+  demoMode: boolean;
 }
 
 export default function SettingsClient({
@@ -16,6 +17,7 @@ export default function SettingsClient({
   warningThreshold: initialWarning,
   criticalThreshold: initialCritical,
   userRole,
+  demoMode,
 }: SettingsClientProps) {
   const router = useRouter();
   const [hospitalName, setHospitalName] = useState(initialHospitalName);
@@ -135,7 +137,7 @@ export default function SettingsClient({
       </form>
 
       {/* Admin Danger Zone */}
-      {userRole === "administrator" && (
+      {userRole === "administrator" && demoMode && (
         <div className="mt-stack_lg bg-red-50/50 border border-error/20 rounded-xl p-container_padding shadow-sm">
           <h3 className="font-title-md text-title-md text-error font-bold mb-1">Danger Zone</h3>
           <p className="font-body-md text-on-surface-variant mb-4">Reset and re-seed the SQLite database. All modifications made during this demo session will be permanently deleted.</p>
@@ -147,6 +149,12 @@ export default function SettingsClient({
           >
             Reset Database Demo Data
           </button>
+        </div>
+      )}
+      {userRole === "administrator" && !demoMode && (
+        <div className="mt-stack_lg bg-surface-container-lowest border border-outline-variant rounded-xl p-container_padding shadow-sm">
+          <h3 className="font-title-md text-title-md text-on-surface font-bold mb-1">Demo Reset Disabled</h3>
+          <p className="font-body-md text-on-surface-variant">DEMO_MODE is false, so seeded demo-data reset is unavailable in this environment.</p>
         </div>
       )}
     </main>

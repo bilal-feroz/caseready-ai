@@ -1,8 +1,13 @@
-import { auth } from "@/auth";
 import { NextResponse } from "next/server";
+import type { NextRequest } from "next/server";
 
-export default auth((req) => {
-  const isLoggedIn = !!req.auth;
+export default function middleware(req: NextRequest) {
+  const isLoggedIn = Boolean(
+    req.cookies.get("authjs.session-token") ||
+      req.cookies.get("__Secure-authjs.session-token") ||
+      req.cookies.get("next-auth.session-token") ||
+      req.cookies.get("__Secure-next-auth.session-token")
+  );
   const isAuthPage = req.nextUrl.pathname.startsWith("/login");
   const isApiAuth = req.nextUrl.pathname.startsWith("/api/auth");
 
@@ -20,7 +25,7 @@ export default auth((req) => {
   }
 
   return NextResponse.next();
-});
+}
 
 export const config = {
   matcher: [
