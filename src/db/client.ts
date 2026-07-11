@@ -3,8 +3,12 @@ import Database from "better-sqlite3";
 import * as schema from "./schema";
 import path from "path";
 import fs from "fs";
+import os from "os";
 
-const dbPath = process.env.DATABASE_PATH || "./data/caseready.db";
+const defaultDatabasePath = process.env.VERCEL
+  ? path.join(os.tmpdir(), "data", "caseready.db")
+  : "./data/caseready.db";
+const dbPath = process.env.DATABASE_PATH || defaultDatabasePath;
 
 const dir = path.dirname(dbPath);
 try {
