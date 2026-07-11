@@ -23,7 +23,19 @@ export interface ReadinessResult {
   recommendedActions: string[];
 }
 
-export function calculateReadiness(requirements: Requirement[]): ReadinessResult {
+export interface ReadinessThresholds {
+  /** Score below this (with no hard blockers) is treated as at risk. */
+  atRiskThreshold?: number;
+  /** With hard blockers, a score below this is treated as blocked (else at risk). */
+  blockedThreshold?: number;
+}
+
+export function calculateReadiness(
+  requirements: Requirement[],
+  thresholds: ReadinessThresholds = {}
+): ReadinessResult {
+  const atRiskThreshold = thresholds.atRiskThreshold ?? 90;
+  const blockedThreshold = thresholds.blockedThreshold ?? 60;
   if (requirements.length === 0) {
     return {
       score: 100,
@@ -94,8 +106,8 @@ export function calculateReadiness(requirements: Requirement[]): ReadinessResult
     // If it has blocked status, it's blocked. If missing/pending, it can be at risk or blocked.
     // Let's check if there are actual "blocked" or "overdue" items
     const hasBlockedOrOverdue = requirements.some(r => r.status === "blocked" || r.status === "overdue");
-    status = hasBlockedOrOverdue || score < 60 ? "blocked" : "at_risk";
-  } else if (warnings.length > 0 || score < 90) {
+    status = hasBlockedOrOverdue || score < blockedThreshold ? "blocked" : "at_risk";
+  } else if (warnings.length > 0 || score < atRiskThreshold) {
     status = "at_risk";
   } else {
     status = "ready";

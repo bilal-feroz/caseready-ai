@@ -1,6 +1,5 @@
 import { db } from "@/db/client";
 import { systemSettings } from "@/db/schema";
-import { eq } from "drizzle-orm";
 import { redirect } from "next/navigation";
 import { auth } from "@/auth";
 import { isDemoMode } from "@/lib/env";
@@ -12,19 +11,22 @@ export default async function SettingsPage() {
     redirect("/login");
   }
 
-  // Fetch settings
   const settings = db.select().from(systemSettings).all();
-  const hospitalName = JSON.parse(settings.find(s => s.key === "hospital_name")?.valueJson || '"Burjeel Hospital"');
-  const warningThreshold = JSON.parse(settings.find(s => s.key === "warning_threshold")?.valueJson || "75");
-  const criticalThreshold = JSON.parse(settings.find(s => s.key === "critical_threshold")?.valueJson || "60");
+  const get = (key: string, fallback: string) => settings.find((s) => s.key === key)?.valueJson ?? fallback;
+  const hospitalName = JSON.parse(get("hospital_name", '"Burjeel Hospital"'));
+  const warningThreshold = JSON.parse(get("warning_threshold", "90"));
+  const criticalThreshold = JSON.parse(get("critical_threshold", "60"));
+  const defaultLanguage = JSON.parse(get("default_language", '"en"'));
 
   return (
     <SettingsClient
       hospitalName={hospitalName}
       warningThreshold={warningThreshold}
       criticalThreshold={criticalThreshold}
+      defaultLanguage={defaultLanguage}
       userRole={session.user?.role || "coordinator"}
       demoMode={isDemoMode()}
+      aiConfigured={Boolean(process.env.GEMINI_API_KEY)}
     />
   );
 }

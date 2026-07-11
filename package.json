@@ -3,8 +3,11 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
+    "bootstrap": "tsx scripts/bootstrap.mjs",
+    "predev": "tsx scripts/bootstrap.mjs",
     "dev": "next dev",
     "build": "next build",
+    "prestart": "tsx scripts/bootstrap.mjs",
     "start": "next start",
     "start:docker": "npm run db:migrate && npm run start",
     "lint": "next lint",

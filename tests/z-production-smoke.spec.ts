@@ -30,14 +30,14 @@ test("production route and secondary-control smoke", async ({ page, request }) =
   await page.getByRole("button", { name: "Notifications" }).click();
   await expect(page.getByText("Notifications").last()).toBeVisible();
 
-  await page.getByRole("button", { name: "Help", exact: true }).click();
+  await page.getByRole("button", { name: "Help", exact: true }).first().click();
   await expect(page.getByText("CaseReady AI Help")).toBeVisible();
-  await page.getByRole("button", { name: "close" }).last().click();
+  await page.getByRole("button", { name: /close/i }).last().click();
 
   await page.getByRole("button", { name: "Language" }).click();
   await expect(page.getByRole("button", { name: /Language/i })).toContainText("ar");
 
-  await page.getByRole("button", { name: /contact_support Support/i }).click();
+  await page.getByRole("button", { name: "Support", exact: true }).click();
   await expect(page.getByText("Demo Support")).toBeVisible();
   await expect(page.getByText("healthy")).toBeVisible();
 

@@ -1,9 +1,10 @@
 import { db } from "@/db/client";
 import { surgicalCases, patients, surgeons, operatingRooms } from "@/db/schema";
-import { eq, like, or } from "drizzle-orm";
+import { eq } from "drizzle-orm";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { auth } from "@/auth";
+import { formatSurgeonName, formatTime } from "@/lib/format";
 
 interface PageProps {
   searchParams: {
@@ -50,6 +51,7 @@ export default async function CasesPage({ searchParams }: PageProps) {
     .innerJoin(patients, eq(surgicalCases.patientId, patients.id))
     .innerJoin(surgeons, eq(surgicalCases.surgeonId, surgeons.id))
     .innerJoin(operatingRooms, eq(surgicalCases.operatingRoomId, operatingRooms.id))
+    .where(eq(surgicalCases.caseStatus, "scheduled"))
     .all();
 
   // Search filter
@@ -96,11 +98,11 @@ export default async function CasesPage({ searchParams }: PageProps) {
   }
 
   return (
-    <main className="p-container_padding max-w-[1600px] mx-auto w-full">
+    <div className="p-4 md:p-container_padding max-w-[1600px] mx-auto w-full">
       <div className="flex flex-col md:flex-row justify-between items-start md:items-end mb-stack_lg gap-stack_md">
         <div>
-          <h2 className="font-headline-md text-headline-md text-on-surface mb-1">Surgical Cases</h2>
-          <p className="font-body-lg text-body-lg text-on-surface-variant">View and manage readiness status for all scheduled cases.</p>
+          <h1 className="font-headline-md text-headline-md text-on-surface mb-1">Surgical Cases</h1>
+          <p className="font-body-lg text-body-lg text-on-surface-variant">Readiness status for every scheduled case.</p>
         </div>
       </div>
 
@@ -195,87 +197,100 @@ export default async function CasesPage({ searchParams }: PageProps) {
         </form>
       </div>
 
+      {/* Result count */}
+      <p className="font-caption text-caption text-on-surface-variant mb-2" aria-live="polite">
+        {casesList.length} {casesList.length === 1 ? "case" : "cases"}
+        {statusFilter !== "all" || roomFilter !== "all" || surgeonFilter !== "all" || query ? " matching filters" : " scheduled"}
+      </p>
+
       {/* Cases Table */}
       <div className="bg-surface-container-lowest border border-outline-variant rounded-xl shadow-sm overflow-hidden">
-        <table className="w-full text-left border-collapse">
-          <thead className="bg-surface-container border-b border-outline-variant">
-            <tr>
-              <th className="py-3 px-4 font-label-md text-label-md text-on-surface-variant">Case ID</th>
-              <th className="py-3 px-4 font-label-md text-label-md text-on-surface-variant">Patient / MRN</th>
-              <th className="py-3 px-4 font-label-md text-label-md text-on-surface-variant">Procedure</th>
-              <th className="py-3 px-4 font-label-md text-label-md text-on-surface-variant">Room / Surgeon</th>
-              <th className="py-3 px-4 font-label-md text-label-md text-on-surface-variant">Readiness</th>
-              <th className="py-3 px-4 font-label-md text-label-md text-on-surface-variant">Status</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-outline-variant font-body-md text-body-md">
-            {casesList.map((c) => {
-              let statusBg = "clinical-teal-bg clinical-teal-text";
-              let statusLabel = "Ready";
-
-              if (c.readinessStatus === "at_risk") {
-                statusBg = "clinical-amber-bg clinical-amber-text";
-                statusLabel = "At Risk";
-              } else if (c.readinessStatus === "blocked") {
-                statusBg = "clinical-red-bg clinical-red-text";
-                statusLabel = "Blocked";
-              }
-
-              return (
-                <tr
-                  key={c.id}
-                  className="hover:bg-surface-container-low transition-colors cursor-pointer h-[72px]"
-                >
-                  <td className="py-3 px-4 font-title-md text-primary font-bold">
-                    <Link href={`/cases/${c.caseNumber}`} className="block h-full w-full">{c.caseNumber}</Link>
-                  </td>
-                  <td className="py-3 px-4">
-                    <Link href={`/cases/${c.caseNumber}`} className="block h-full w-full">
-                      <div className="font-title-md text-title-md">{c.patientName}</div>
-                      <div className="font-caption text-caption text-on-surface-variant">MRN: {c.patientMrn}</div>
-                    </Link>
-                  </td>
-                  <td className="py-3 px-4">
-                    <Link href={`/cases/${c.caseNumber}`} className="block h-full w-full">{c.procedureName}</Link>
-                  </td>
-                  <td className="py-3 px-4">
-                    <Link href={`/cases/${c.caseNumber}`} className="block h-full w-full">
-                      <div>{c.roomCode}</div>
-                      <div className="font-caption text-caption text-on-surface-variant">Dr. {c.surgeonName}</div>
-                    </Link>
-                  </td>
-                  <td className="py-3 px-4">
-                    <Link href={`/cases/${c.caseNumber}`} className="block h-full w-full">
-                      <div className="flex items-center gap-2">
-                        <span className="font-title-md font-bold">{c.readinessScore}%</span>
-                        <div className="w-16 h-1.5 bg-surface-variant rounded-full overflow-hidden">
-                          <div
-                            className={`h-full ${
-                              c.readinessStatus === "ready"
-                                ? "bg-[#177C76]"
-                                : c.readinessStatus === "at_risk"
-                                ? "bg-[#E65100]"
-                                : "bg-[#C62828]"
-                            }`}
-                            style={{ width: `${c.readinessScore}%` }}
-                          ></div>
-                        </div>
-                      </div>
-                    </Link>
-                  </td>
-                  <td className="py-3 px-4">
-                    <Link href={`/cases/${c.caseNumber}`} className="block h-full w-full">
-                      <span className={`inline-block px-2.5 py-1 rounded-md ${statusBg} font-label-md text-[10px] uppercase font-bold`}>
-                        {statusLabel}
-                      </span>
-                    </Link>
+        <div className="overflow-x-auto">
+          <table className="w-full text-left border-collapse min-w-[720px]">
+            <thead className="bg-surface-container border-b border-outline-variant">
+              <tr>
+                <th scope="col" className="py-3 px-4 font-label-md text-label-md text-on-surface-variant">Case ID</th>
+                <th scope="col" className="py-3 px-4 font-label-md text-label-md text-on-surface-variant">Time</th>
+                <th scope="col" className="py-3 px-4 font-label-md text-label-md text-on-surface-variant">Patient / MRN</th>
+                <th scope="col" className="py-3 px-4 font-label-md text-label-md text-on-surface-variant">Procedure</th>
+                <th scope="col" className="py-3 px-4 font-label-md text-label-md text-on-surface-variant">Room / Surgeon</th>
+                <th scope="col" className="py-3 px-4 font-label-md text-label-md text-on-surface-variant">Readiness</th>
+                <th scope="col" className="py-3 px-4 font-label-md text-label-md text-on-surface-variant">Status</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-outline-variant font-body-md text-body-md">
+              {casesList.length === 0 ? (
+                <tr>
+                  <td colSpan={7} className="py-12 text-center text-on-surface-variant">
+                    <span className="material-symbols-outlined text-[40px] block mb-2" aria-hidden="true">search_off</span>
+                    <p className="font-body-lg mb-1">No cases match these filters.</p>
+                    <Link href="/cases" className="text-primary font-label-md hover:underline">Reset filters</Link>
                   </td>
                 </tr>
-              );
-            })}
-          </tbody>
-        </table>
+              ) : (
+                casesList.map((c) => {
+                  let statusBg = "clinical-teal-bg clinical-teal-text";
+                  let statusLabel = "Ready";
+                  let bar = "bg-[#177C76]";
+                  if (c.readinessStatus === "at_risk") {
+                    statusBg = "clinical-amber-bg clinical-amber-text";
+                    statusLabel = "At Risk";
+                    bar = "bg-[#E65100]";
+                  } else if (c.readinessStatus === "blocked") {
+                    statusBg = "clinical-red-bg clinical-red-text";
+                    statusLabel = "Blocked";
+                    bar = "bg-[#C62828]";
+                  }
+
+                  return (
+                    <tr key={c.id} className="hover:bg-surface-container-low transition-colors cursor-pointer h-[72px]">
+                      <td className="py-3 px-4 font-title-md text-primary font-bold">
+                        <Link href={`/cases/${c.caseNumber}`} className="block h-full w-full focus-visible:outline-none focus-visible:underline">{c.caseNumber}</Link>
+                      </td>
+                      <td className="py-3 px-4 text-on-surface-variant tabular-nums">
+                        <Link href={`/cases/${c.caseNumber}`} className="block h-full w-full">{formatTime(c.scheduledStart)}</Link>
+                      </td>
+                      <td className="py-3 px-4">
+                        <Link href={`/cases/${c.caseNumber}`} className="block h-full w-full">
+                          <div className="font-title-md text-title-md">{c.patientName}</div>
+                          <div className="font-caption text-caption text-on-surface-variant">MRN: {c.patientMrn}</div>
+                        </Link>
+                      </td>
+                      <td className="py-3 px-4">
+                        <Link href={`/cases/${c.caseNumber}`} className="block h-full w-full">{c.procedureName}</Link>
+                      </td>
+                      <td className="py-3 px-4">
+                        <Link href={`/cases/${c.caseNumber}`} className="block h-full w-full">
+                          <div>{c.roomCode}</div>
+                          <div className="font-caption text-caption text-on-surface-variant">{formatSurgeonName(c.surgeonName)}</div>
+                        </Link>
+                      </td>
+                      <td className="py-3 px-4">
+                        <Link href={`/cases/${c.caseNumber}`} className="block h-full w-full">
+                          <div className="flex items-center gap-2">
+                            <span className="font-title-md font-bold tabular-nums">{c.readinessScore}%</span>
+                            <div className="w-16 h-2 bg-surface-variant rounded-full overflow-hidden">
+                              <div className={`h-full ${bar}`} style={{ width: `${c.readinessScore}%` }}></div>
+                            </div>
+                          </div>
+                        </Link>
+                      </td>
+                      <td className="py-3 px-4">
+                        <Link href={`/cases/${c.caseNumber}`} className="block h-full w-full">
+                          <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-md ${statusBg} font-label-md text-[10px] uppercase font-bold`}>
+                            <span className="material-symbols-outlined" style={{ fontSize: "13px" }} aria-hidden="true">{statusLabel === "Ready" ? "check_circle" : statusLabel === "At Risk" ? "warning" : "block"}</span>
+                            {statusLabel}
+                          </span>
+                        </Link>
+                      </td>
+                    </tr>
+                  );
+                })
+              )}
+            </tbody>
+          </table>
+        </div>
       </div>
-    </main>
+    </div>
   );
 }

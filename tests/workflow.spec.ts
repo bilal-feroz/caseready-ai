@@ -14,10 +14,11 @@ test("coordinator workflow", async ({ page }) => {
   await page.goto("http://localhost:3000/cases/CR-1051");
 
   // 3. Open evidence (clicks requirement pre-op labs row to show panel)
-  await page.getByText("Pre-op Labs").click();
+  await page.getByText("Pre-op Labs", { exact: true }).click();
 
   // 4. Acknowledge evidence
   await page.getByRole("button", { name: "Acknowledge" }).click();
+  await expect(page.getByText(/Evidence acknowledged/i)).toBeVisible();
 
   // 5. Open Action Centre
   await page.goto("http://localhost:3000/actions");
@@ -26,7 +27,7 @@ test("coordinator workflow", async ({ page }) => {
   await page.getByText("#CR-1002").click();
   await page.getByRole("button", { name: /Approve and send/i }).click();
 
-  // 7. Verification of success message
+  // 7. Verification of success message (simulated send, clearly labelled)
   await expect(page.getByText(/draft approved/i)).toBeVisible();
 
   // 8. Audit event exists

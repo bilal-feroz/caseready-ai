@@ -2,12 +2,12 @@
 import type { Metadata } from "next";
 import "./globals.css";
 import { auth } from "@/auth";
-import SideNav from "@/components/SideNav";
-import Header from "@/components/Header";
+import { getHospitalName, getDefaultLanguage } from "@/lib/settings";
+import AppShell from "@/components/AppShell";
 
 export const metadata: Metadata = {
   title: "CaseReady AI - Surgical Readiness Command Centre",
-  description: "Burjeel Hospital Surgical Readiness Command Centre",
+  description: "Human-supervised surgical readiness and operating-room recovery platform.",
 };
 
 export default async function RootLayout({
@@ -16,6 +16,8 @@ export default async function RootLayout({
   children: React.ReactNode;
 }) {
   const session = await auth();
+  const hospitalName = session ? getHospitalName() : "";
+  const defaultLanguage = session ? getDefaultLanguage() : "en";
 
   return (
     <html lang="en">
@@ -25,17 +27,11 @@ export default async function RootLayout({
           rel="stylesheet"
         />
       </head>
-      <body className="antialiased min-h-screen relative flex">
+      <body className="antialiased min-h-screen">
         {session ? (
-          <>
-            <SideNav user={session.user} />
-            <div className="flex-1 flex flex-col ml-[232px] w-[calc(100%-232px)]">
-              <Header user={session.user} />
-              <div className="flex-grow min-h-screen bg-background">
-                {children}
-              </div>
-            </div>
-          </>
+          <AppShell user={session.user} hospitalName={hospitalName} defaultLanguage={defaultLanguage}>
+            {children}
+          </AppShell>
         ) : (
           <main className="w-full min-h-screen bg-[#F7F5F1]">
             {children}

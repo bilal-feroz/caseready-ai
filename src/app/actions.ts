@@ -4,10 +4,12 @@ import { db } from "@/db/client";
 import * as schema from "@/db/schema";
 import { eq, and } from "drizzle-orm";
 import { calculateReadiness } from "@/lib/readiness";
-import { auth } from "@/auth";
+import { auth, signOut } from "@/auth";
 import { revalidatePath } from "next/cache";
-import { execSync } from "node:child_process";
 import { isDemoMode } from "@/lib/env";
+import { seedDatabase } from "@/lib/seed";
+import { getReadinessThresholds } from "@/lib/settings";
+import { z } from "zod";
 
 // Helper to check user authorization
 async function requireAuth() {
@@ -18,12 +20,30 @@ async function requireAuth() {
   return session.user;
 }
 
+// Monotonic-ish unique id for audit rows so two events in the same millisecond never collide.
+let auditCounter = 0;
+function auditId() {
+  auditCounter = (auditCounter + 1) % 1_000_000;
+  return `au-evt-${Date.now()}-${auditCounter}`;
+}
+
+const idSchema = z.string().trim().min(1).max(128);
+
+// Server-side sign-out (Auth.js v5). Using the server action avoids the client-side
+// CSRF token dance that can log "MissingCSRF" during signout in the beta client.
+export async function logout() {
+  await signOut({ redirectTo: "/login" });
+}
+
 // 1. Evidence Verification Actions
 export async function updateEvidenceStatus(
   evidenceId: string,
   status: "acknowledged" | "flagged_incorrect"
 ) {
   const user = await requireAuth();
+  idSchema.parse(evidenceId);
+  z.enum(["acknowledged", "flagged_incorrect"]).parse(status);
+  const thresholds = getReadinessThresholds();
 
   return db.transaction((tx) => {
     // 1. Get the evidence doc
@@ -81,7 +101,7 @@ export async function updateEvidenceStatus(
       severity: r.severity as any,
     }));
 
-    const calculation = calculateReadiness(mappedReqs);
+    const calculation = calculateReadiness(mappedReqs, thresholds);
 
     const [sCase] = tx
       .select()
@@ -106,11 +126,11 @@ export async function updateEvidenceStatus(
     // 5. Log audit event
     tx.insert(schema.auditEvents)
       .values({
-        id: `au-evt-${Date.now()}`,
+        id: auditId(),
         caseId: evidence.surgicalCaseId,
         actorUserId: (user as any).id,
         actorType: "user",
-        eventType: "evidence_acknowledged",
+        eventType: status === "acknowledged" ? "evidence_acknowledged" : "evidence_flagged",
         entityType: "evidence_document",
         entityId: evidenceId,
         previousStateJson: JSON.stringify({
@@ -123,10 +143,98 @@ export async function updateEvidenceStatus(
           requirement: { status: reqStatus },
           case: { readinessScore: calculation.score, readinessStatus: calculation.status },
         }),
-        reason: `Evidence ${status} by medical coordinator`,
+        reason:
+          status === "acknowledged"
+            ? `Evidence acknowledged by ${user.name ?? "coordinator"}; requirement marked completed.`
+            : `Evidence flagged as incorrect by ${user.name ?? "coordinator"}; requirement returned to missing.`,
+        approvalStatus: "recorded",
       })
       .run();
 
+    revalidatePath(`/cases`);
+    return { success: true, status: calculation.status, score: calculation.score };
+  });
+}
+
+// 1b. Request clinical review on a requirement: sets clinical_review, opens a follow-up action, recalculates, audits.
+export async function requestClinicalReview(requirementId: string) {
+  const user = await requireAuth();
+  idSchema.parse(requirementId);
+  const thresholds = getReadinessThresholds();
+
+  return db.transaction((tx) => {
+    const [requirement] = tx
+      .select()
+      .from(schema.readinessRequirements)
+      .where(eq(schema.readinessRequirements.id, requirementId))
+      .limit(1)
+      .all();
+    if (!requirement) throw new Error("Requirement not found");
+
+    const previousStatus = requirement.status;
+    const now = new Date().toISOString();
+
+    tx.update(schema.readinessRequirements)
+      .set({ status: "clinical_review", lastCheckedAt: now })
+      .where(eq(schema.readinessRequirements.id, requirementId))
+      .run();
+
+    // Open a follow-up action so the review lands in the Action Centre queue (idempotent per requirement).
+    const followId = `a-review-${requirement.id}`;
+    const [existing] = tx
+      .select({ id: schema.actionItems.id })
+      .from(schema.actionItems)
+      .where(eq(schema.actionItems.id, followId))
+      .limit(1)
+      .all();
+    if (!existing) {
+      tx.insert(schema.actionItems)
+        .values({
+          id: followId,
+          surgicalCaseId: requirement.surgicalCaseId,
+          requirementId: requirement.id,
+          title: `Clinical review: ${requirement.requirementType.replace(/_/g, " ")}`,
+          description: `Clinical review requested for ${requirement.requirementType.replace(/_/g, " ")}. A reviewer must confirm before this requirement clears.`,
+          actionType: "review_comms",
+          priority: "high",
+          status: "pending",
+          ownerDepartment: "Clinical Review",
+          requiresApproval: true,
+        })
+        .run();
+    }
+
+    const reqs = tx
+      .select()
+      .from(schema.readinessRequirements)
+      .where(eq(schema.readinessRequirements.surgicalCaseId, requirement.surgicalCaseId))
+      .all();
+    const calculation = calculateReadiness(
+      reqs.map((r) => ({ id: r.id, requirementType: r.requirementType, category: r.category, status: r.status as any, severity: r.severity as any })),
+      thresholds
+    );
+    tx.update(schema.surgicalCases)
+      .set({ readinessScore: calculation.score, readinessStatus: calculation.status, updatedAt: now })
+      .where(eq(schema.surgicalCases.id, requirement.surgicalCaseId))
+      .run();
+
+    tx.insert(schema.auditEvents)
+      .values({
+        id: auditId(),
+        caseId: requirement.surgicalCaseId,
+        actorUserId: (user as any).id,
+        actorType: "user",
+        eventType: "clinical_review_requested",
+        entityType: "readiness_requirement",
+        entityId: requirementId,
+        previousStateJson: JSON.stringify({ status: previousStatus }),
+        newStateJson: JSON.stringify({ status: "clinical_review", followUpAction: followId }),
+        reason: `Clinical review requested for ${requirement.requirementType.replace(/_/g, " ")} by ${user.name ?? "coordinator"}; follow-up action opened.`,
+        approvalStatus: "pending",
+      })
+      .run();
+
+    revalidatePath("/cases");
     return { success: true };
   });
 }
@@ -138,6 +246,12 @@ export async function approveCommunication(
   arText: string
 ) {
   const user = await requireAuth();
+  idSchema.parse(communicationId);
+  const content = z
+    .object({ en: z.string().trim().min(1).max(4000), ar: z.string().trim().min(1).max(4000) })
+    .parse({ en: enText, ar: arText });
+  enText = content.en;
+  arText = content.ar;
 
   return db.transaction((tx) => {
     // 1. Get communication
@@ -193,7 +307,7 @@ export async function approveCommunication(
     // 4. Log audit event
     tx.insert(schema.auditEvents)
       .values({
-        id: `au-evt-${Date.now()}`,
+        id: auditId(),
         caseId: comms.surgicalCaseId,
         actorUserId: (user as any).id,
         actorType: "user",
@@ -208,10 +322,93 @@ export async function approveCommunication(
           communication: { status: "sent", finalContent: { en: enText, ar: arText } },
           action: { status: "completed" },
         }),
-        reason: "Pre-admissions WhatsApp notification draft approved and sent",
+        reason: `Bilingual patient message approved by ${user.name ?? "coordinator"}. Simulated send recorded — no external message was dispatched.`,
+        approvalStatus: "approved",
       })
       .run();
 
+    revalidatePath("/actions");
+    return { success: true };
+  });
+}
+
+// 2a. Save an edited communication draft without approving it.
+export async function saveCommunicationDraft(communicationId: string, enText: string, arText: string) {
+  const user = await requireAuth();
+  idSchema.parse(communicationId);
+  const content = z
+    .object({ en: z.string().trim().min(1).max(4000), ar: z.string().trim().min(1).max(4000) })
+    .parse({ en: enText, ar: arText });
+
+  return db.transaction((tx) => {
+    const [comms] = tx
+      .select()
+      .from(schema.communications)
+      .where(eq(schema.communications.id, communicationId))
+      .limit(1)
+      .all();
+    if (!comms) throw new Error("Communication draft not found");
+    if (comms.status === "sent") throw new Error("This message has already been sent and cannot be edited.");
+
+    tx.update(schema.communications)
+      .set({ draftContent: JSON.stringify({ en: content.en, ar: content.ar }) })
+      .where(eq(schema.communications.id, communicationId))
+      .run();
+
+    tx.insert(schema.auditEvents)
+      .values({
+        id: auditId(),
+        caseId: comms.surgicalCaseId,
+        actorUserId: (user as any).id,
+        actorType: "user",
+        eventType: "communication_draft_saved",
+        entityType: "communication",
+        entityId: communicationId,
+        newStateJson: JSON.stringify({ status: "draft" }),
+        reason: `Draft edited and saved by ${user.name ?? "coordinator"}. Not sent.`,
+        approvalStatus: "recorded",
+      })
+      .run();
+
+    revalidatePath("/actions");
+    return { success: true };
+  });
+}
+
+// 2b. Return a communication draft for further review (auditable, keeps it in draft).
+export async function returnCommunicationForReview(communicationId: string, note?: string) {
+  const user = await requireAuth();
+  idSchema.parse(communicationId);
+  const reason = z.string().trim().max(500).optional().parse(note);
+
+  return db.transaction((tx) => {
+    const [comms] = tx
+      .select()
+      .from(schema.communications)
+      .where(eq(schema.communications.id, communicationId))
+      .limit(1)
+      .all();
+    if (!comms) throw new Error("Communication draft not found");
+
+    tx.insert(schema.auditEvents)
+      .values({
+        id: auditId(),
+        caseId: comms.surgicalCaseId,
+        actorUserId: (user as any).id,
+        actorType: "user",
+        eventType: "communication_returned",
+        entityType: "communication",
+        entityId: communicationId,
+        previousStateJson: JSON.stringify({ status: comms.status }),
+        newStateJson: JSON.stringify({ status: "draft" }),
+        reason: reason && reason.length > 0
+          ? `Draft returned for review by ${user.name ?? "coordinator"}: ${reason}`
+          : `Draft returned for review by ${user.name ?? "coordinator"}. Not sent.`,
+        approvalStatus: "returned",
+      })
+      .run();
+
+    revalidatePath("/actions");
     return { success: true };
   });
 }
@@ -219,6 +416,8 @@ export async function approveCommunication(
 // 3. Slot Rescue Propose Replacement
 export async function proposeReplacement(slotId: string, proposedCaseId: string) {
   const user = await requireAuth();
+  idSchema.parse(slotId);
+  idSchema.parse(proposedCaseId);
 
   return db.transaction((tx) => {
     // Check if slot exists
@@ -233,8 +432,23 @@ export async function proposeReplacement(slotId: string, proposedCaseId: string)
       throw new Error("OR slot not found");
     }
 
+    // The proposed case must be an eligible standby candidate for this slot.
+    const [candidate] = tx
+      .select({ eligible: schema.standbyCandidates.eligible })
+      .from(schema.standbyCandidates)
+      .where(
+        and(
+          eq(schema.standbyCandidates.slotId, slotId),
+          eq(schema.standbyCandidates.surgicalCaseId, proposedCaseId)
+        )
+      )
+      .limit(1)
+      .all();
+    if (!candidate) throw new Error("Proposed case is not a standby candidate for this slot.");
+    if (!candidate.eligible) throw new Error("Proposed case is ineligible and cannot be proposed.");
+
     // Create proposal
-    const proposalId = `prop-${Date.now()}`;
+    const proposalId = `prop-${Date.now()}-${auditCounter}`;
     tx.insert(schema.replacementProposals)
       .values({
         id: proposalId,
@@ -249,7 +463,7 @@ export async function proposeReplacement(slotId: string, proposedCaseId: string)
     // Log audit event
     tx.insert(schema.auditEvents)
       .values({
-        id: `au-evt-${Date.now()}`,
+        id: auditId(),
         caseId: proposedCaseId,
         actorUserId: (user as any).id,
         actorType: "user",
@@ -257,12 +471,46 @@ export async function proposeReplacement(slotId: string, proposedCaseId: string)
         entityType: "replacement_proposal",
         entityId: proposalId,
         newStateJson: JSON.stringify({ slotId, originalCaseId: slot.originalCaseId, proposedCaseId, status: "pending" }),
-        reason: "Rescheduled standby candidate proposed for endangered slot",
+        reason: `Standby candidate proposed for the endangered slot by ${user.name ?? "coordinator"}. Requires scheduling-officer approval; no booking has been made.`,
+        approvalStatus: "pending",
       })
       .run();
 
+    revalidatePath("/slot-rescue");
     return { success: true, proposalId };
   });
+}
+
+// 3b. Request patient confirmation for a standby candidate (simulated, audited — no external message).
+export async function requestPatientConfirmation(slotId: string, proposedCaseId: string) {
+  const user = await requireAuth();
+  idSchema.parse(slotId);
+  idSchema.parse(proposedCaseId);
+
+  const [slot] = db
+    .select()
+    .from(schema.operatingRoomSlots)
+    .where(eq(schema.operatingRoomSlots.id, slotId))
+    .limit(1)
+    .all();
+  if (!slot) throw new Error("OR slot not found");
+
+  db.insert(schema.auditEvents)
+    .values({
+      id: auditId(),
+      caseId: proposedCaseId,
+      actorUserId: (user as any).id,
+      actorType: "user",
+      eventType: "patient_confirmation_requested",
+      entityType: "surgical_case",
+      entityId: proposedCaseId,
+      reason: `Standby confirmation requested for the OR 03 slot by ${user.name ?? "coordinator"}. Simulated request recorded — no external message was sent.`,
+      approvalStatus: "recorded",
+    })
+    .run();
+
+  revalidatePath("/slot-rescue");
+  return { success: true };
 }
 
 // 4. Approve/Reject Proposal
@@ -272,6 +520,9 @@ export async function approveProposal(
   rejectionReason?: string
 ) {
   const user = await requireAuth();
+  idSchema.parse(proposalId);
+  z.boolean().parse(approve);
+  const reason = z.string().trim().max(500).optional().parse(rejectionReason);
 
   // Authorize: scheduling_officer or administrator
   if (user.role !== "scheduling_officer" && user.role !== "administrator") {
@@ -299,7 +550,7 @@ export async function approveProposal(
       .set({
         status,
         approvedBy: (user as any).id,
-        rejectionReason: approve ? null : rejectionReason,
+        rejectionReason: approve ? null : reason,
         updatedAt: now,
       })
       .where(eq(schema.replacementProposals.id, proposalId))
@@ -316,7 +567,7 @@ export async function approveProposal(
     // Log audit event
     tx.insert(schema.auditEvents)
       .values({
-        id: `au-evt-${Date.now()}`,
+        id: auditId(),
         caseId: proposal.proposedCaseId,
         actorUserId: (user as any).id,
         actorType: "user",
@@ -325,43 +576,59 @@ export async function approveProposal(
         entityId: proposalId,
         previousStateJson: JSON.stringify(previousState),
         newStateJson: JSON.stringify({ status, approvedBy: (user as any).id }),
-        reason: approve ? "Standby swap approved" : `Standby swap rejected: ${rejectionReason}`,
+        reason: approve
+          ? `Standby swap approved by ${user.name ?? "scheduling officer"}; slot marked rescued.`
+          : `Standby swap rejected by ${user.name ?? "scheduling officer"}${reason ? `: ${reason}` : "."}`,
+        approvalStatus: approve ? "approved" : "rejected",
       })
       .run();
 
+    revalidatePath("/slot-rescue");
     return { success: true };
   });
 }
 
-// 5. Update global settings
-export async function updateSettings(
-  hospitalName: string,
-  warningThreshold: number,
-  criticalThreshold: number
-) {
+// 5. Update global settings (administrator only)
+const settingsSchema = z.object({
+  hospitalName: z.string().trim().min(2).max(120),
+  warningThreshold: z.number().int().min(0).max(100),
+  criticalThreshold: z.number().int().min(0).max(100),
+  defaultLanguage: z.enum(["en", "ar"]),
+});
+
+export async function updateSettings(input: z.infer<typeof settingsSchema>) {
   const user = await requireAuth();
+  if (user.role !== "administrator") {
+    throw new Error("Forbidden: settings can only be changed by an administrator.");
+  }
+
+  const parsed = settingsSchema.parse(input);
+  if (parsed.criticalThreshold > parsed.warningThreshold) {
+    throw new Error("Critical threshold cannot exceed the warning threshold.");
+  }
+
+  const now = new Date().toISOString();
+  const userId = (user as any).id as string;
+  const write = (key: string, value: unknown, tx: typeof db) =>
+    tx
+      .update(schema.systemSettings)
+      .set({ valueJson: JSON.stringify(value), updatedAt: now, updatedBy: userId })
+      .where(eq(schema.systemSettings.key, key))
+      .run();
 
   db.transaction((tx) => {
-    tx.update(schema.systemSettings)
-      .set({ valueJson: JSON.stringify(hospitalName), updatedAt: new Date().toISOString(), updatedBy: (user as any).id })
-      .where(eq(schema.systemSettings.key, "hospital_name"))
-      .run();
-
-    tx.update(schema.systemSettings)
-      .set({ valueJson: JSON.stringify(warningThreshold), updatedAt: new Date().toISOString(), updatedBy: (user as any).id })
-      .where(eq(schema.systemSettings.key, "warning_threshold"))
-      .run();
-
-    tx.update(schema.systemSettings)
-      .set({ valueJson: JSON.stringify(criticalThreshold), updatedAt: new Date().toISOString(), updatedBy: (user as any).id })
-      .where(eq(schema.systemSettings.key, "critical_threshold"))
-      .run();
+    write("hospital_name", parsed.hospitalName, tx);
+    write("warning_threshold", parsed.warningThreshold, tx);
+    write("critical_threshold", parsed.criticalThreshold, tx);
+    write("default_language", parsed.defaultLanguage, tx);
   });
 
+  revalidatePath("/settings");
+  revalidatePath("/", "layout");
   return { success: true };
 }
 
-// 6. Reset database
+// 6. Reset database (administrator only, demo mode) — runs the seed in-process and audits it.
 export async function resetDemoData() {
   const user = await requireAuth();
 
@@ -373,7 +640,24 @@ export async function resetDemoData() {
   }
 
   try {
-    execSync("npm run db:seed", { stdio: "inherit" });
+    await seedDatabase();
+
+    // Record the reset itself so the fresh audit trail shows who reset the demo.
+    db.insert(schema.auditEvents)
+      .values({
+        id: `au-reset-${Date.now()}`,
+        caseId: null,
+        actorUserId: (user as any).id,
+        actorType: "user",
+        eventType: "demo_data_reset",
+        entityType: "system",
+        entityId: "database",
+        reason: `Demo data reset to seeded baseline by ${user.name ?? "administrator"}.`,
+        approvalStatus: "approved",
+      })
+      .run();
+
+    revalidatePath("/", "layout");
     return { success: true };
   } catch (err) {
     console.error(err);
@@ -382,8 +666,21 @@ export async function resetDemoData() {
 }
 
 // 7. Manual update requirement status (e.g. anaesthesia review)
+const requirementStatusSchema = z.enum([
+  "completed",
+  "pending",
+  "missing",
+  "overdue",
+  "blocked",
+  "clinical_review",
+  "not_applicable",
+]);
+
 export async function updateRequirementStatus(requirementId: string, status: schema.RequirementStatus) {
   const user = await requireAuth();
+  idSchema.parse(requirementId);
+  requirementStatusSchema.parse(status);
+  const thresholds = getReadinessThresholds();
 
   return db.transaction((tx) => {
     const [requirement] = tx
@@ -418,7 +715,8 @@ export async function updateRequirementStatus(requirementId: string, status: sch
         category: r.category,
         status: r.status as any,
         severity: r.severity as any,
-      }))
+      })),
+      thresholds
     );
 
     tx.update(schema.surgicalCases)
@@ -433,19 +731,21 @@ export async function updateRequirementStatus(requirementId: string, status: sch
     // Log audit
     tx.insert(schema.auditEvents)
       .values({
-        id: `au-evt-${Date.now()}`,
+        id: auditId(),
         caseId: requirement.surgicalCaseId,
         actorUserId: (user as any).id,
         actorType: "user",
-        eventType: "readiness_recalculated",
+        eventType: "requirement_updated",
         entityType: "readiness_requirement",
         entityId: requirementId,
-        previousStateJson: JSON.stringify({ status: previousStatus }),
-        newStateJson: JSON.stringify({ status }),
-        reason: `Requirement ${requirement.requirementType} updated manually to ${status}`,
+        previousStateJson: JSON.stringify({ status: previousStatus, readiness: null }),
+        newStateJson: JSON.stringify({ status, readinessScore: calculation.score, readinessStatus: calculation.status }),
+        reason: `${requirement.requirementType.replace(/_/g, " ")} set to ${status.replace(/_/g, " ")} by ${user.name ?? "coordinator"}; readiness recalculated to ${calculation.score}%.`,
+        approvalStatus: "recorded",
       })
       .run();
 
-    return { success: true };
+    revalidatePath("/cases");
+    return { success: true, status: calculation.status, score: calculation.score };
   });
 }

@@ -17,10 +17,13 @@ export default async function ActionsPage() {
       id: actionItems.id,
       title: actionItems.title,
       description: actionItems.description,
+      actionType: actionItems.actionType,
       priority: actionItems.priority,
       status: actionItems.status,
       ownerDepartment: actionItems.ownerDepartment,
       requiresApproval: actionItems.requiresApproval,
+      dueAt: actionItems.dueAt,
+      completedAt: actionItems.completedAt,
       caseNumber: surgicalCases.caseNumber,
       procedureName: surgicalCases.procedureName,
       patientName: patients.maskedName,
@@ -28,6 +31,7 @@ export default async function ActionsPage() {
     .from(actionItems)
     .innerJoin(surgicalCases, eq(actionItems.surgicalCaseId, surgicalCases.id))
     .innerJoin(patients, eq(surgicalCases.patientId, patients.id))
+    .orderBy(desc(actionItems.priority))
     .all();
 
   // Fetch communications
