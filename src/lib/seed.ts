@@ -1,5 +1,5 @@
 import bcrypt from "bcryptjs";
-import { db } from "../db/client";
+import { db, ensureSchema } from "../db/client";
 import * as schema from "../db/schema";
 import type { RequirementStatus } from "../db/schema";
 import { calculateReadiness } from "./readiness";
@@ -56,26 +56,29 @@ export async function seedDatabase() {
     throw new Error("Refusing to seed demo records because DEMO_MODE=false.");
   }
 
+  // Make sure the schema exists (no-op if already provisioned).
+  await ensureSchema();
+
   // Clear child tables before parents.
-  db.delete(schema.replacementProposals).run();
-  db.delete(schema.standbyCandidates).run();
-  db.delete(schema.operatingRoomSlots).run();
-  db.delete(schema.communications).run();
-  db.delete(schema.actionItems).run();
-  db.delete(schema.evidenceDocuments).run();
-  db.delete(schema.readinessRequirements).run();
-  db.delete(schema.auditEvents).run();
-  db.delete(schema.systemSettings).run();
-  db.delete(schema.surgicalCases).run();
-  db.delete(schema.patients).run();
-  db.delete(schema.surgeons).run();
-  db.delete(schema.operatingRooms).run();
-  db.delete(schema.users).run();
+  await db.delete(schema.replacementProposals);
+  await db.delete(schema.standbyCandidates);
+  await db.delete(schema.operatingRoomSlots);
+  await db.delete(schema.communications);
+  await db.delete(schema.actionItems);
+  await db.delete(schema.evidenceDocuments);
+  await db.delete(schema.readinessRequirements);
+  await db.delete(schema.auditEvents);
+  await db.delete(schema.systemSettings);
+  await db.delete(schema.surgicalCases);
+  await db.delete(schema.patients);
+  await db.delete(schema.surgeons);
+  await db.delete(schema.operatingRooms);
+  await db.delete(schema.users);
 
   const passwordHash = await bcrypt.hash("Demo123!", 10);
 
   // 1. Users
-  db.insert(schema.users).values([
+  await db.insert(schema.users).values([
     { id: "u-1", email: "coordinator@caseready.demo", passwordHash, fullName: "Aisha Rahman", role: "coordinator", department: "Pre-Admissions" },
     { id: "u-2", email: "clinician@caseready.demo", passwordHash, fullName: "Dr. Leila Hassan", role: "clinical_reviewer", department: "Surgical Services" },
     { id: "u-3", email: "scheduling@caseready.demo", passwordHash, fullName: "Faisal Al Blooshi", role: "scheduling_officer", department: "Operations" },
@@ -83,7 +86,7 @@ export async function seedDatabase() {
   ]).run();
 
   // 2. Operating rooms
-  db.insert(schema.operatingRooms).values([
+  await db.insert(schema.operatingRooms).values([
     { id: "or-1", code: "OR 01", name: "Operating Room 1", capabilitiesJson: JSON.stringify(["General", "Orthopedic"]), active: true },
     { id: "or-2", code: "OR 02", name: "Operating Room 2", capabilitiesJson: JSON.stringify(["Orthopedic", "Neurology"]), active: true },
     { id: "or-3", code: "OR 03", name: "Operating Room 3", capabilitiesJson: JSON.stringify(["ENT", "General"]), active: true },
@@ -93,7 +96,7 @@ export async function seedDatabase() {
   ]).run();
 
   // 3. Surgeons (names stored without title; UI adds "Dr.")
-  db.insert(schema.surgeons).values([
+  await db.insert(schema.surgeons).values([
     { id: "s-1", fullName: "Leila Hassan", specialty: "Orthopedic Surgery" },
     { id: "s-2", fullName: "Sami Khalfan", specialty: "Orthopedic Surgery" },
     { id: "s-3", fullName: "Rania Haddad", specialty: "General Surgery" },
@@ -102,7 +105,7 @@ export async function seedDatabase() {
   ]).run();
 
   // 4. Patients
-  db.insert(schema.patients).values([
+  await db.insert(schema.patients).values([
     { id: "p-1", syntheticPatientId: "MRN-98234-A", maskedName: "M. Al Nuaimi", standbyConsent: true, availabilityStatus: "confirmed" },
     { id: "p-2", syntheticPatientId: "MRN-44102-B", maskedName: "A. Saeed", preferredLanguage: "ar", standbyConsent: true, availabilityStatus: "confirmed" },
     { id: "p-3", syntheticPatientId: "MRN-11299-C", maskedName: "F. Mansoor", standbyConsent: false, availabilityStatus: "confirmed" },
@@ -233,7 +236,7 @@ export async function seedDatabase() {
     readinessScore: c.readiness, readinessStatus: "ready", caseStatus: "standby", cancellationReason: null,
   }));
 
-  db.insert(schema.surgicalCases).values([...caseRows, ...standbyRows]).run();
+  await db.insert(schema.surgicalCases).values([...caseRows, ...standbyRows]).run();
 
   // 6. Requirements
   const reqRows = withReqs.flatMap((c) =>
@@ -243,10 +246,10 @@ export async function seedDatabase() {
       dueAt: r.dueAt ?? iso(OP_DAY, "07:00"),
     }))
   );
-  db.insert(schema.readinessRequirements).values(reqRows).run();
+  await db.insert(schema.readinessRequirements).values(reqRows).run();
 
   // 7. Action items (varied; includes completed + overdue examples)
-  db.insert(schema.actionItems).values([
+  await db.insert(schema.actionItems).values([
     { id: "a-1", surgicalCaseId: "c-1051", requirementId: "r-c-1051-5", title: "Attach insurance authorization", description: "Authorization attachment missing from Daman portal. Surgery cannot proceed without financial clearance.", actionType: "lab_followup", priority: "high", status: "pending", ownerDepartment: "Finance", requiresApproval: false, dueAt: iso(OP_DAY, "07:30"), createdAt: iso(PLAN_DAY, "14:10") },
     { id: "a-2", surgicalCaseId: "c-1051", requirementId: "r-c-1051-3", title: "Chase anaesthesia sign-off", description: "Anaesthesia assessment awaiting physician signature in the medical portal.", actionType: "review_comms", priority: "high", status: "pending", ownerDepartment: "Anaesthesia", requiresApproval: false, dueAt: iso(OP_DAY, "07:00"), createdAt: iso(PLAN_DAY, "14:12") },
     { id: "a-3", surgicalCaseId: "c-1051", requirementId: "r-c-1051-4", title: "Clinical review of pre-op labs", description: "HbA1c 6.1% exceeds the 6.0% protocol threshold for Ortho-TK-01. Clinical review required.", actionType: "review_comms", priority: "high", status: "pending", ownerDepartment: "Clinical Review", requiresApproval: false, dueAt: iso(OP_DAY, "06:30"), createdAt: iso(PLAN_DAY, "14:15") },
@@ -261,7 +264,7 @@ export async function seedDatabase() {
   ]).run();
 
   // 8. Communications (bilingual draft awaiting approval)
-  db.insert(schema.communications).values([
+  await db.insert(schema.communications).values([
     {
       id: "com-1", actionItemId: "a-4", surgicalCaseId: "c-2", language: "en/ar", recipientType: "patient",
       draftContent: JSON.stringify({
@@ -273,13 +276,13 @@ export async function seedDatabase() {
   ]).run();
 
   // 9. Evidence documents on CR-1051
-  db.insert(schema.evidenceDocuments).values([
+  await db.insert(schema.evidenceDocuments).values([
     { id: "e-1", surgicalCaseId: "c-1051", requirementId: "r-c-1051-4", title: "Med-Path Labs Report", documentType: "PDF Scan", extractedText: "Patient S. Rahman — HbA1c 6.1%, Hb 13.2 g/dL, Platelets 240k", confidence: 92, synthetic: true, reviewStatus: "pending" },
     { id: "e-2", surgicalCaseId: "c-1051", requirementId: "r-c-1051-5", title: "Daman Authorization Screenshot", documentType: "Portal Capture", extractedText: "Authorization reference not found for MRN-1051-X on 12 Jul 2026.", confidence: 88, synthetic: true, reviewStatus: "pending" },
   ]).run();
 
   // 10. Endangered OR slot (freed by cancelled CR-1057)
-  db.insert(schema.operatingRoomSlots).values([
+  await db.insert(schema.operatingRoomSlots).values([
     { id: "slot-1", operatingRoomId: "or-3", originalCaseId: "c-1057", startTime: iso(OP_DAY, "11:45"), endTime: iso(OP_DAY, "13:00"), durationMinutes: 75, status: "endangered" },
   ]).run();
 
@@ -304,7 +307,7 @@ export async function seedDatabase() {
     };
   });
   const evaluated = evaluateSlotCandidates(slotDuration, candInputs);
-  db.insert(schema.standbyCandidates).values(
+  await db.insert(schema.standbyCandidates).values(
     evaluated.map((r, i) => ({
       id: `cand-${i + 1}`, slotId: "slot-1", surgicalCaseId: r.caseId,
       durationScore: r.durationScore, teamScore: r.teamScore, equipmentScore: r.equipmentScore,
@@ -314,7 +317,7 @@ export async function seedDatabase() {
   ).run();
 
   // 12. System settings
-  db.insert(schema.systemSettings).values([
+  await db.insert(schema.systemSettings).values([
     { id: "set-1", key: "hospital_name", valueJson: JSON.stringify("Burjeel Hospital, Abu Dhabi") },
     { id: "set-2", key: "warning_threshold", valueJson: JSON.stringify(90) },
     { id: "set-3", key: "critical_threshold", valueJson: JSON.stringify(60) },
@@ -336,7 +339,7 @@ export async function seedDatabase() {
     { h: 5, caseId: "c-1057", actor: "u-3", actorType: "user", event: "slot_flagged", entity: "operating_room_slot", entityId: "slot-1", reason: "OR 03 11:45 slot flagged endangered after CR-1057 cancellation (patient unavailable).", approval: null },
     { h: 3, caseId: "c-3", actor: null, actorType: "system_rule", event: "action_overdue", entity: "action_item", entityId: "a-9", reason: "Pre-authorization request for CR-1003 passed its cut-off and was marked overdue.", approval: null },
   ];
-  db.insert(schema.auditEvents).values(
+  await db.insert(schema.auditEvents).values(
     audit.map((a, i) => ({
       id: `au-seed-${i + 1}`, caseId: a.caseId,
       actorUserId: a.actor, actorType: a.actorType, eventType: a.event, entityType: a.entity, entityId: a.entityId,

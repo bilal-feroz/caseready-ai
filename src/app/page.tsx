@@ -29,7 +29,7 @@ export default async function DashboardPage({ searchParams }: PageProps) {
   const selectedTab = searchParams.tab || "all";
 
   // Only real, scheduled cases belong on tomorrow's operating list (excludes cancelled + standby pool).
-  let allCases = db
+  const allCases = await db
     .select({
       id: surgicalCases.id,
       caseNumber: surgicalCases.caseNumber,
@@ -80,7 +80,7 @@ export default async function DashboardPage({ searchParams }: PageProps) {
   }
 
   // Attention queue: real pending actions, most urgent first.
-  const attentionItems = db
+  const attentionItems = await db
     .select({
       id: actionItems.id,
       description: actionItems.description,

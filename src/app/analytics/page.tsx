@@ -10,7 +10,7 @@ export default async function AnalyticsPage() {
     redirect("/login");
   }
 
-  const cases = db.select().from(surgicalCases).where(eq(surgicalCases.caseStatus, "scheduled")).all();
+  const cases = await db.select().from(surgicalCases).where(eq(surgicalCases.caseStatus, "scheduled"));
   const totalCases = cases.length;
   const readyCases = cases.filter((c) => c.readinessStatus === "ready").length;
   const atRiskCases = cases.filter((c) => c.readinessStatus === "at_risk").length;
@@ -19,7 +19,7 @@ export default async function AnalyticsPage() {
     .filter((c) => c.readinessStatus === "at_risk" || c.readinessStatus === "blocked")
     .reduce((sum, c) => sum + c.durationMinutes, 0);
 
-  const actions = db.select().from(actionItems).all();
+  const actions = await db.select().from(actionItems);
   const completed = actions.filter((a) => a.status === "completed");
   const pendingActions = actions.filter((a) => a.status === "pending").length;
   const overdueActions = actions.filter((a) => a.status === "overdue").length;
@@ -34,11 +34,11 @@ export default async function AnalyticsPage() {
       ? `${(resolutionHours.reduce((s, h) => s + h, 0) / resolutionHours.length).toFixed(1)} hours`
       : "No data yet";
 
-  const proposals = db.select().from(replacementProposals).all();
+  const proposals = await db.select().from(replacementProposals);
   const approvedProposals = proposals.filter((p) => p.status === "approved").length;
 
   // Recovered capacity = duration of slots that have been rescued.
-  const slots = db.select().from(operatingRoomSlots).all();
+  const slots = await db.select().from(operatingRoomSlots);
   const recoveredMinutes = slots.filter((s) => s.status === "rescued").reduce((sum, s) => sum + s.durationMinutes, 0);
 
   // Blockers by owning department, scaled relative to the largest bucket.

@@ -17,7 +17,7 @@ export async function GET() {
     return NextResponse.json({ notifications: [] }, { status: 401 });
   }
 
-  const overdueActions = db
+  const overdueActions = await db
     .select({
       id: actionItems.id,
       title: actionItems.title,
@@ -29,7 +29,7 @@ export async function GET() {
     .limit(3)
     .all();
 
-  const reviewCases = db
+  const reviewCases = await db
     .select({
       id: readinessRequirements.id,
       caseNumber: surgicalCases.caseNumber,
@@ -43,7 +43,7 @@ export async function GET() {
     .limit(4)
     .all();
 
-  const proposals = db
+  const proposals = await db
     .select({
       id: replacementProposals.id,
       proposedCaseId: replacementProposals.proposedCaseId,
@@ -56,7 +56,7 @@ export async function GET() {
     .limit(3)
     .all();
 
-  const recentAudit = db
+  const recentAudit = await db
     .select({
       id: auditEvents.id,
       eventType: auditEvents.eventType,

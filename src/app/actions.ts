@@ -43,16 +43,14 @@ export async function updateEvidenceStatus(
   const user = await requireAuth();
   idSchema.parse(evidenceId);
   z.enum(["acknowledged", "flagged_incorrect"]).parse(status);
-  const thresholds = getReadinessThresholds();
+  const thresholds = await getReadinessThresholds();
 
-  return db.transaction((tx) => {
-    // 1. Get the evidence doc
-    const [evidence] = tx
+  return db.transaction(async (tx) => {
+    const [evidence] = await tx
       .select()
       .from(schema.evidenceDocuments)
       .where(eq(schema.evidenceDocuments.id, evidenceId))
-      .limit(1)
-      .all();
+      .limit(1);
 
     if (!evidence) {
       throw new Error("Evidence not found");
@@ -60,40 +58,34 @@ export async function updateEvidenceStatus(
 
     const previousState = { reviewStatus: evidence.reviewStatus };
 
-    // 2. Update review status
-    tx.update(schema.evidenceDocuments)
+    await tx
+      .update(schema.evidenceDocuments)
       .set({ reviewStatus: status })
-      .where(eq(schema.evidenceDocuments.id, evidenceId))
-      .run();
+      .where(eq(schema.evidenceDocuments.id, evidenceId));
 
-    // 3. Map review status to requirement status
     const reqStatus = status === "acknowledged" ? "completed" : "missing";
 
-    const [requirement] = tx
+    const [requirement] = await tx
       .select()
       .from(schema.readinessRequirements)
       .where(eq(schema.readinessRequirements.id, evidence.requirementId))
-      .limit(1)
-      .all();
+      .limit(1);
 
     const previousReqStatus = requirement?.status;
 
     if (requirement) {
-      tx.update(schema.readinessRequirements)
+      await tx
+        .update(schema.readinessRequirements)
         .set({ status: reqStatus, lastCheckedAt: new Date().toISOString() })
-        .where(eq(schema.readinessRequirements.id, evidence.requirementId))
-        .run();
+        .where(eq(schema.readinessRequirements.id, evidence.requirementId));
     }
 
-    // 4. Recalculate case readiness
-    const reqs = tx
+    const reqs = await tx
       .select()
       .from(schema.readinessRequirements)
-      .where(eq(schema.readinessRequirements.surgicalCaseId, evidence.surgicalCaseId))
-      .all();
+      .where(eq(schema.readinessRequirements.surgicalCaseId, evidence.surgicalCaseId));
 
-    // Map DB fields to Readiness engine interface
-    const mappedReqs = reqs.map(r => ({
+    const mappedReqs = reqs.map((r) => ({
       id: r.id,
       requirementType: r.requirementType,
       category: r.category,
@@ -103,55 +95,51 @@ export async function updateEvidenceStatus(
 
     const calculation = calculateReadiness(mappedReqs, thresholds);
 
-    const [sCase] = tx
+    const [sCase] = await tx
       .select()
       .from(schema.surgicalCases)
       .where(eq(schema.surgicalCases.id, evidence.surgicalCaseId))
-      .limit(1)
-      .all();
+      .limit(1);
 
     const previousCaseState = sCase
       ? { readinessScore: sCase.readinessScore, readinessStatus: sCase.readinessStatus }
       : null;
 
-    tx.update(schema.surgicalCases)
+    await tx
+      .update(schema.surgicalCases)
       .set({
         readinessScore: calculation.score,
         readinessStatus: calculation.status,
         updatedAt: new Date().toISOString(),
       })
-      .where(eq(schema.surgicalCases.id, evidence.surgicalCaseId))
-      .run();
+      .where(eq(schema.surgicalCases.id, evidence.surgicalCaseId));
 
-    // 5. Log audit event
-    tx.insert(schema.auditEvents)
-      .values({
-        id: auditId(),
-        caseId: evidence.surgicalCaseId,
-        actorUserId: (user as any).id,
-        actorType: "user",
-        eventType: status === "acknowledged" ? "evidence_acknowledged" : "evidence_flagged",
-        entityType: "evidence_document",
-        entityId: evidenceId,
-        previousStateJson: JSON.stringify({
-          evidence: previousState,
-          requirement: { status: previousReqStatus },
-          case: previousCaseState,
-        }),
-        newStateJson: JSON.stringify({
-          evidence: { reviewStatus: status },
-          requirement: { status: reqStatus },
-          case: { readinessScore: calculation.score, readinessStatus: calculation.status },
-        }),
-        reason:
-          status === "acknowledged"
-            ? `Evidence acknowledged by ${user.name ?? "coordinator"}; requirement marked completed.`
-            : `Evidence flagged as incorrect by ${user.name ?? "coordinator"}; requirement returned to missing.`,
-        approvalStatus: "recorded",
-      })
-      .run();
+    await tx.insert(schema.auditEvents).values({
+      id: auditId(),
+      caseId: evidence.surgicalCaseId,
+      actorUserId: (user as any).id,
+      actorType: "user",
+      eventType: status === "acknowledged" ? "evidence_acknowledged" : "evidence_flagged",
+      entityType: "evidence_document",
+      entityId: evidenceId,
+      previousStateJson: JSON.stringify({
+        evidence: previousState,
+        requirement: { status: previousReqStatus },
+        case: previousCaseState,
+      }),
+      newStateJson: JSON.stringify({
+        evidence: { reviewStatus: status },
+        requirement: { status: reqStatus },
+        case: { readinessScore: calculation.score, readinessStatus: calculation.status },
+      }),
+      reason:
+        status === "acknowledged"
+          ? `Evidence acknowledged by ${user.name ?? "coordinator"}; requirement marked completed.`
+          : `Evidence flagged as incorrect by ${user.name ?? "coordinator"}; requirement returned to missing.`,
+      approvalStatus: "recorded",
+    });
 
-    revalidatePath(`/cases`);
+    revalidatePath("/cases");
     return { success: true, status: calculation.status, score: calculation.score };
   });
 }
@@ -160,79 +148,71 @@ export async function updateEvidenceStatus(
 export async function requestClinicalReview(requirementId: string) {
   const user = await requireAuth();
   idSchema.parse(requirementId);
-  const thresholds = getReadinessThresholds();
+  const thresholds = await getReadinessThresholds();
 
-  return db.transaction((tx) => {
-    const [requirement] = tx
+  return db.transaction(async (tx) => {
+    const [requirement] = await tx
       .select()
       .from(schema.readinessRequirements)
       .where(eq(schema.readinessRequirements.id, requirementId))
-      .limit(1)
-      .all();
+      .limit(1);
     if (!requirement) throw new Error("Requirement not found");
 
     const previousStatus = requirement.status;
     const now = new Date().toISOString();
 
-    tx.update(schema.readinessRequirements)
+    await tx
+      .update(schema.readinessRequirements)
       .set({ status: "clinical_review", lastCheckedAt: now })
-      .where(eq(schema.readinessRequirements.id, requirementId))
-      .run();
+      .where(eq(schema.readinessRequirements.id, requirementId));
 
-    // Open a follow-up action so the review lands in the Action Centre queue (idempotent per requirement).
     const followId = `a-review-${requirement.id}`;
-    const [existing] = tx
+    const [existing] = await tx
       .select({ id: schema.actionItems.id })
       .from(schema.actionItems)
       .where(eq(schema.actionItems.id, followId))
-      .limit(1)
-      .all();
+      .limit(1);
     if (!existing) {
-      tx.insert(schema.actionItems)
-        .values({
-          id: followId,
-          surgicalCaseId: requirement.surgicalCaseId,
-          requirementId: requirement.id,
-          title: `Clinical review: ${requirement.requirementType.replace(/_/g, " ")}`,
-          description: `Clinical review requested for ${requirement.requirementType.replace(/_/g, " ")}. A reviewer must confirm before this requirement clears.`,
-          actionType: "review_comms",
-          priority: "high",
-          status: "pending",
-          ownerDepartment: "Clinical Review",
-          requiresApproval: true,
-        })
-        .run();
+      await tx.insert(schema.actionItems).values({
+        id: followId,
+        surgicalCaseId: requirement.surgicalCaseId,
+        requirementId: requirement.id,
+        title: `Clinical review: ${requirement.requirementType.replace(/_/g, " ")}`,
+        description: `Clinical review requested for ${requirement.requirementType.replace(/_/g, " ")}. A reviewer must confirm before this requirement clears.`,
+        actionType: "review_comms",
+        priority: "high",
+        status: "pending",
+        ownerDepartment: "Clinical Review",
+        requiresApproval: true,
+      });
     }
 
-    const reqs = tx
+    const reqs = await tx
       .select()
       .from(schema.readinessRequirements)
-      .where(eq(schema.readinessRequirements.surgicalCaseId, requirement.surgicalCaseId))
-      .all();
+      .where(eq(schema.readinessRequirements.surgicalCaseId, requirement.surgicalCaseId));
     const calculation = calculateReadiness(
       reqs.map((r) => ({ id: r.id, requirementType: r.requirementType, category: r.category, status: r.status as any, severity: r.severity as any })),
       thresholds
     );
-    tx.update(schema.surgicalCases)
+    await tx
+      .update(schema.surgicalCases)
       .set({ readinessScore: calculation.score, readinessStatus: calculation.status, updatedAt: now })
-      .where(eq(schema.surgicalCases.id, requirement.surgicalCaseId))
-      .run();
+      .where(eq(schema.surgicalCases.id, requirement.surgicalCaseId));
 
-    tx.insert(schema.auditEvents)
-      .values({
-        id: auditId(),
-        caseId: requirement.surgicalCaseId,
-        actorUserId: (user as any).id,
-        actorType: "user",
-        eventType: "clinical_review_requested",
-        entityType: "readiness_requirement",
-        entityId: requirementId,
-        previousStateJson: JSON.stringify({ status: previousStatus }),
-        newStateJson: JSON.stringify({ status: "clinical_review", followUpAction: followId }),
-        reason: `Clinical review requested for ${requirement.requirementType.replace(/_/g, " ")} by ${user.name ?? "coordinator"}; follow-up action opened.`,
-        approvalStatus: "pending",
-      })
-      .run();
+    await tx.insert(schema.auditEvents).values({
+      id: auditId(),
+      caseId: requirement.surgicalCaseId,
+      actorUserId: (user as any).id,
+      actorType: "user",
+      eventType: "clinical_review_requested",
+      entityType: "readiness_requirement",
+      entityId: requirementId,
+      previousStateJson: JSON.stringify({ status: previousStatus }),
+      newStateJson: JSON.stringify({ status: "clinical_review", followUpAction: followId }),
+      reason: `Clinical review requested for ${requirement.requirementType.replace(/_/g, " ")} by ${user.name ?? "coordinator"}; follow-up action opened.`,
+      approvalStatus: "pending",
+    });
 
     revalidatePath("/cases");
     return { success: true };
@@ -240,11 +220,7 @@ export async function requestClinicalReview(requirementId: string) {
 }
 
 // 2. Action Items / Communication Approval
-export async function approveCommunication(
-  communicationId: string,
-  enText: string,
-  arText: string
-) {
+export async function approveCommunication(communicationId: string, enText: string, arText: string) {
   const user = await requireAuth();
   idSchema.parse(communicationId);
   const content = z
@@ -253,24 +229,22 @@ export async function approveCommunication(
   enText = content.en;
   arText = content.ar;
 
-  return db.transaction((tx) => {
-    // 1. Get communication
-    const [comms] = tx
+  return db.transaction(async (tx) => {
+    const [comms] = await tx
       .select()
       .from(schema.communications)
       .where(eq(schema.communications.id, communicationId))
-      .limit(1)
-      .all();
+      .limit(1);
 
     if (!comms) {
       throw new Error("Communication draft not found");
     }
 
     const previousCommsState = { status: comms.status, finalContent: comms.finalContent };
-
-    // 2. Update communication to sent
     const now = new Date().toISOString();
-    tx.update(schema.communications)
+
+    await tx
+      .update(schema.communications)
       .set({
         status: "sent",
         finalContent: JSON.stringify({ en: enText, ar: arText }),
@@ -278,54 +252,39 @@ export async function approveCommunication(
         approvedAt: now,
         sentAt: now,
       })
-      .where(eq(schema.communications.id, communicationId))
-      .run();
+      .where(eq(schema.communications.id, communicationId));
 
-    // 3. Mark action item as completed
-    const [action] = tx
+    const [action] = await tx
       .select()
       .from(schema.actionItems)
       .where(eq(schema.actionItems.id, comms.actionItemId))
-      .limit(1)
-      .all();
+      .limit(1);
 
     const previousActionState = action ? { status: action.status } : null;
 
     if (action) {
-      tx.update(schema.actionItems)
-        .set({
-          status: "completed",
-          approvedBy: (user as any).id,
-          approvedAt: now,
-          completedAt: now,
-          updatedAt: now,
-        })
-        .where(eq(schema.actionItems.id, comms.actionItemId))
-        .run();
+      await tx
+        .update(schema.actionItems)
+        .set({ status: "completed", approvedBy: (user as any).id, approvedAt: now, completedAt: now, updatedAt: now })
+        .where(eq(schema.actionItems.id, comms.actionItemId));
     }
 
-    // 4. Log audit event
-    tx.insert(schema.auditEvents)
-      .values({
-        id: auditId(),
-        caseId: comms.surgicalCaseId,
-        actorUserId: (user as any).id,
-        actorType: "user",
-        eventType: "communication_sent",
-        entityType: "communication",
-        entityId: communicationId,
-        previousStateJson: JSON.stringify({
-          communication: previousCommsState,
-          action: previousActionState,
-        }),
-        newStateJson: JSON.stringify({
-          communication: { status: "sent", finalContent: { en: enText, ar: arText } },
-          action: { status: "completed" },
-        }),
-        reason: `Bilingual patient message approved by ${user.name ?? "coordinator"}. Simulated send recorded — no external message was dispatched.`,
-        approvalStatus: "approved",
-      })
-      .run();
+    await tx.insert(schema.auditEvents).values({
+      id: auditId(),
+      caseId: comms.surgicalCaseId,
+      actorUserId: (user as any).id,
+      actorType: "user",
+      eventType: "communication_sent",
+      entityType: "communication",
+      entityId: communicationId,
+      previousStateJson: JSON.stringify({ communication: previousCommsState, action: previousActionState }),
+      newStateJson: JSON.stringify({
+        communication: { status: "sent", finalContent: { en: enText, ar: arText } },
+        action: { status: "completed" },
+      }),
+      reason: `Bilingual patient message approved by ${user.name ?? "coordinator"}. Simulated send recorded — no external message was dispatched.`,
+      approvalStatus: "approved",
+    });
 
     revalidatePath("/actions");
     return { success: true };
@@ -340,35 +299,32 @@ export async function saveCommunicationDraft(communicationId: string, enText: st
     .object({ en: z.string().trim().min(1).max(4000), ar: z.string().trim().min(1).max(4000) })
     .parse({ en: enText, ar: arText });
 
-  return db.transaction((tx) => {
-    const [comms] = tx
+  return db.transaction(async (tx) => {
+    const [comms] = await tx
       .select()
       .from(schema.communications)
       .where(eq(schema.communications.id, communicationId))
-      .limit(1)
-      .all();
+      .limit(1);
     if (!comms) throw new Error("Communication draft not found");
     if (comms.status === "sent") throw new Error("This message has already been sent and cannot be edited.");
 
-    tx.update(schema.communications)
+    await tx
+      .update(schema.communications)
       .set({ draftContent: JSON.stringify({ en: content.en, ar: content.ar }) })
-      .where(eq(schema.communications.id, communicationId))
-      .run();
+      .where(eq(schema.communications.id, communicationId));
 
-    tx.insert(schema.auditEvents)
-      .values({
-        id: auditId(),
-        caseId: comms.surgicalCaseId,
-        actorUserId: (user as any).id,
-        actorType: "user",
-        eventType: "communication_draft_saved",
-        entityType: "communication",
-        entityId: communicationId,
-        newStateJson: JSON.stringify({ status: "draft" }),
-        reason: `Draft edited and saved by ${user.name ?? "coordinator"}. Not sent.`,
-        approvalStatus: "recorded",
-      })
-      .run();
+    await tx.insert(schema.auditEvents).values({
+      id: auditId(),
+      caseId: comms.surgicalCaseId,
+      actorUserId: (user as any).id,
+      actorType: "user",
+      eventType: "communication_draft_saved",
+      entityType: "communication",
+      entityId: communicationId,
+      newStateJson: JSON.stringify({ status: "draft" }),
+      reason: `Draft edited and saved by ${user.name ?? "coordinator"}. Not sent.`,
+      approvalStatus: "recorded",
+    });
 
     revalidatePath("/actions");
     return { success: true };
@@ -381,32 +337,30 @@ export async function returnCommunicationForReview(communicationId: string, note
   idSchema.parse(communicationId);
   const reason = z.string().trim().max(500).optional().parse(note);
 
-  return db.transaction((tx) => {
-    const [comms] = tx
+  return db.transaction(async (tx) => {
+    const [comms] = await tx
       .select()
       .from(schema.communications)
       .where(eq(schema.communications.id, communicationId))
-      .limit(1)
-      .all();
+      .limit(1);
     if (!comms) throw new Error("Communication draft not found");
 
-    tx.insert(schema.auditEvents)
-      .values({
-        id: auditId(),
-        caseId: comms.surgicalCaseId,
-        actorUserId: (user as any).id,
-        actorType: "user",
-        eventType: "communication_returned",
-        entityType: "communication",
-        entityId: communicationId,
-        previousStateJson: JSON.stringify({ status: comms.status }),
-        newStateJson: JSON.stringify({ status: "draft" }),
-        reason: reason && reason.length > 0
+    await tx.insert(schema.auditEvents).values({
+      id: auditId(),
+      caseId: comms.surgicalCaseId,
+      actorUserId: (user as any).id,
+      actorType: "user",
+      eventType: "communication_returned",
+      entityType: "communication",
+      entityId: communicationId,
+      previousStateJson: JSON.stringify({ status: comms.status }),
+      newStateJson: JSON.stringify({ status: "draft" }),
+      reason:
+        reason && reason.length > 0
           ? `Draft returned for review by ${user.name ?? "coordinator"}: ${reason}`
           : `Draft returned for review by ${user.name ?? "coordinator"}. Not sent.`,
-        approvalStatus: "returned",
-      })
-      .run();
+      approvalStatus: "returned",
+    });
 
     revalidatePath("/actions");
     return { success: true };
@@ -419,62 +373,47 @@ export async function proposeReplacement(slotId: string, proposedCaseId: string)
   idSchema.parse(slotId);
   idSchema.parse(proposedCaseId);
 
-  return db.transaction((tx) => {
-    // Check if slot exists
-    const [slot] = tx
+  return db.transaction(async (tx) => {
+    const [slot] = await tx
       .select()
       .from(schema.operatingRoomSlots)
       .where(eq(schema.operatingRoomSlots.id, slotId))
-      .limit(1)
-      .all();
+      .limit(1);
 
     if (!slot) {
       throw new Error("OR slot not found");
     }
 
-    // The proposed case must be an eligible standby candidate for this slot.
-    const [candidate] = tx
+    const [candidate] = await tx
       .select({ eligible: schema.standbyCandidates.eligible })
       .from(schema.standbyCandidates)
-      .where(
-        and(
-          eq(schema.standbyCandidates.slotId, slotId),
-          eq(schema.standbyCandidates.surgicalCaseId, proposedCaseId)
-        )
-      )
-      .limit(1)
-      .all();
+      .where(and(eq(schema.standbyCandidates.slotId, slotId), eq(schema.standbyCandidates.surgicalCaseId, proposedCaseId)))
+      .limit(1);
     if (!candidate) throw new Error("Proposed case is not a standby candidate for this slot.");
     if (!candidate.eligible) throw new Error("Proposed case is ineligible and cannot be proposed.");
 
-    // Create proposal
     const proposalId = `prop-${Date.now()}-${auditCounter}`;
-    tx.insert(schema.replacementProposals)
-      .values({
-        id: proposalId,
-        slotId,
-        originalCaseId: slot.originalCaseId,
-        proposedCaseId,
-        status: "pending",
-        proposedBy: (user as any).id,
-      })
-      .run();
+    await tx.insert(schema.replacementProposals).values({
+      id: proposalId,
+      slotId,
+      originalCaseId: slot.originalCaseId,
+      proposedCaseId,
+      status: "pending",
+      proposedBy: (user as any).id,
+    });
 
-    // Log audit event
-    tx.insert(schema.auditEvents)
-      .values({
-        id: auditId(),
-        caseId: proposedCaseId,
-        actorUserId: (user as any).id,
-        actorType: "user",
-        eventType: "proposal_created",
-        entityType: "replacement_proposal",
-        entityId: proposalId,
-        newStateJson: JSON.stringify({ slotId, originalCaseId: slot.originalCaseId, proposedCaseId, status: "pending" }),
-        reason: `Standby candidate proposed for the endangered slot by ${user.name ?? "coordinator"}. Requires scheduling-officer approval; no booking has been made.`,
-        approvalStatus: "pending",
-      })
-      .run();
+    await tx.insert(schema.auditEvents).values({
+      id: auditId(),
+      caseId: proposedCaseId,
+      actorUserId: (user as any).id,
+      actorType: "user",
+      eventType: "proposal_created",
+      entityType: "replacement_proposal",
+      entityId: proposalId,
+      newStateJson: JSON.stringify({ slotId, originalCaseId: slot.originalCaseId, proposedCaseId, status: "pending" }),
+      reason: `Standby candidate proposed for the endangered slot by ${user.name ?? "coordinator"}. Requires scheduling-officer approval; no booking has been made.`,
+      approvalStatus: "pending",
+    });
 
     revalidatePath("/slot-rescue");
     return { success: true, proposalId };
@@ -487,55 +426,46 @@ export async function requestPatientConfirmation(slotId: string, proposedCaseId:
   idSchema.parse(slotId);
   idSchema.parse(proposedCaseId);
 
-  const [slot] = db
+  const [slot] = await db
     .select()
     .from(schema.operatingRoomSlots)
     .where(eq(schema.operatingRoomSlots.id, slotId))
-    .limit(1)
-    .all();
+    .limit(1);
   if (!slot) throw new Error("OR slot not found");
 
-  db.insert(schema.auditEvents)
-    .values({
-      id: auditId(),
-      caseId: proposedCaseId,
-      actorUserId: (user as any).id,
-      actorType: "user",
-      eventType: "patient_confirmation_requested",
-      entityType: "surgical_case",
-      entityId: proposedCaseId,
-      reason: `Standby confirmation requested for the OR 03 slot by ${user.name ?? "coordinator"}. Simulated request recorded — no external message was sent.`,
-      approvalStatus: "recorded",
-    })
-    .run();
+  await db.insert(schema.auditEvents).values({
+    id: auditId(),
+    caseId: proposedCaseId,
+    actorUserId: (user as any).id,
+    actorType: "user",
+    eventType: "patient_confirmation_requested",
+    entityType: "surgical_case",
+    entityId: proposedCaseId,
+    reason: `Standby confirmation requested for the OR 03 slot by ${user.name ?? "coordinator"}. Simulated request recorded — no external message was sent.`,
+    approvalStatus: "recorded",
+  });
 
   revalidatePath("/slot-rescue");
   return { success: true };
 }
 
 // 4. Approve/Reject Proposal
-export async function approveProposal(
-  proposalId: string,
-  approve: boolean,
-  rejectionReason?: string
-) {
+export async function approveProposal(proposalId: string, approve: boolean, rejectionReason?: string) {
   const user = await requireAuth();
   idSchema.parse(proposalId);
   z.boolean().parse(approve);
   const reason = z.string().trim().max(500).optional().parse(rejectionReason);
 
-  // Authorize: scheduling_officer or administrator
   if (user.role !== "scheduling_officer" && user.role !== "administrator") {
     throw new Error("Forbidden");
   }
 
-  return db.transaction((tx) => {
-    const [proposal] = tx
+  return db.transaction(async (tx) => {
+    const [proposal] = await tx
       .select()
       .from(schema.replacementProposals)
       .where(eq(schema.replacementProposals.id, proposalId))
-      .limit(1)
-      .all();
+      .limit(1);
 
     if (!proposal) {
       throw new Error("Proposal not found");
@@ -545,43 +475,33 @@ export async function approveProposal(
     const status = approve ? "approved" : "rejected";
     const now = new Date().toISOString();
 
-    // Update proposal
-    tx.update(schema.replacementProposals)
-      .set({
-        status,
-        approvedBy: (user as any).id,
-        rejectionReason: approve ? null : reason,
-        updatedAt: now,
-      })
-      .where(eq(schema.replacementProposals.id, proposalId))
-      .run();
+    await tx
+      .update(schema.replacementProposals)
+      .set({ status, approvedBy: (user as any).id, rejectionReason: approve ? null : reason, updatedAt: now })
+      .where(eq(schema.replacementProposals.id, proposalId));
 
-    // Update OR slot status if approved
     if (approve) {
-      tx.update(schema.operatingRoomSlots)
+      await tx
+        .update(schema.operatingRoomSlots)
         .set({ status: "rescued" })
-        .where(eq(schema.operatingRoomSlots.id, proposal.slotId))
-        .run();
+        .where(eq(schema.operatingRoomSlots.id, proposal.slotId));
     }
 
-    // Log audit event
-    tx.insert(schema.auditEvents)
-      .values({
-        id: auditId(),
-        caseId: proposal.proposedCaseId,
-        actorUserId: (user as any).id,
-        actorType: "user",
-        eventType: approve ? "proposal_approved" : "proposal_rejected",
-        entityType: "replacement_proposal",
-        entityId: proposalId,
-        previousStateJson: JSON.stringify(previousState),
-        newStateJson: JSON.stringify({ status, approvedBy: (user as any).id }),
-        reason: approve
-          ? `Standby swap approved by ${user.name ?? "scheduling officer"}; slot marked rescued.`
-          : `Standby swap rejected by ${user.name ?? "scheduling officer"}${reason ? `: ${reason}` : "."}`,
-        approvalStatus: approve ? "approved" : "rejected",
-      })
-      .run();
+    await tx.insert(schema.auditEvents).values({
+      id: auditId(),
+      caseId: proposal.proposedCaseId,
+      actorUserId: (user as any).id,
+      actorType: "user",
+      eventType: approve ? "proposal_approved" : "proposal_rejected",
+      entityType: "replacement_proposal",
+      entityId: proposalId,
+      previousStateJson: JSON.stringify(previousState),
+      newStateJson: JSON.stringify({ status, approvedBy: (user as any).id }),
+      reason: approve
+        ? `Standby swap approved by ${user.name ?? "scheduling officer"}; slot marked rescued.`
+        : `Standby swap rejected by ${user.name ?? "scheduling officer"}${reason ? `: ${reason}` : "."}`,
+      approvalStatus: approve ? "approved" : "rejected",
+    });
 
     revalidatePath("/slot-rescue");
     return { success: true };
@@ -609,18 +529,17 @@ export async function updateSettings(input: z.infer<typeof settingsSchema>) {
 
   const now = new Date().toISOString();
   const userId = (user as any).id as string;
-  const write = (key: string, value: unknown, tx: typeof db) =>
-    tx
-      .update(schema.systemSettings)
-      .set({ valueJson: JSON.stringify(value), updatedAt: now, updatedBy: userId })
-      .where(eq(schema.systemSettings.key, key))
-      .run();
 
-  db.transaction((tx) => {
-    write("hospital_name", parsed.hospitalName, tx);
-    write("warning_threshold", parsed.warningThreshold, tx);
-    write("critical_threshold", parsed.criticalThreshold, tx);
-    write("default_language", parsed.defaultLanguage, tx);
+  await db.transaction(async (tx) => {
+    const write = (key: string, value: unknown) =>
+      tx
+        .update(schema.systemSettings)
+        .set({ valueJson: JSON.stringify(value), updatedAt: now, updatedBy: userId })
+        .where(eq(schema.systemSettings.key, key));
+    await write("hospital_name", parsed.hospitalName);
+    await write("warning_threshold", parsed.warningThreshold);
+    await write("critical_threshold", parsed.criticalThreshold);
+    await write("default_language", parsed.defaultLanguage);
   });
 
   revalidatePath("/settings");
@@ -642,20 +561,17 @@ export async function resetDemoData() {
   try {
     await seedDatabase();
 
-    // Record the reset itself so the fresh audit trail shows who reset the demo.
-    db.insert(schema.auditEvents)
-      .values({
-        id: `au-reset-${Date.now()}`,
-        caseId: null,
-        actorUserId: (user as any).id,
-        actorType: "user",
-        eventType: "demo_data_reset",
-        entityType: "system",
-        entityId: "database",
-        reason: `Demo data reset to seeded baseline by ${user.name ?? "administrator"}.`,
-        approvalStatus: "approved",
-      })
-      .run();
+    await db.insert(schema.auditEvents).values({
+      id: `au-reset-${Date.now()}`,
+      caseId: null,
+      actorUserId: (user as any).id,
+      actorType: "user",
+      eventType: "demo_data_reset",
+      entityType: "system",
+      entityId: "database",
+      reason: `Demo data reset to seeded baseline by ${user.name ?? "administrator"}.`,
+      approvalStatus: "approved",
+    });
 
     revalidatePath("/", "layout");
     return { success: true };
@@ -680,15 +596,14 @@ export async function updateRequirementStatus(requirementId: string, status: sch
   const user = await requireAuth();
   idSchema.parse(requirementId);
   requirementStatusSchema.parse(status);
-  const thresholds = getReadinessThresholds();
+  const thresholds = await getReadinessThresholds();
 
-  return db.transaction((tx) => {
-    const [requirement] = tx
+  return db.transaction(async (tx) => {
+    const [requirement] = await tx
       .select()
       .from(schema.readinessRequirements)
       .where(eq(schema.readinessRequirements.id, requirementId))
-      .limit(1)
-      .all();
+      .limit(1);
 
     if (!requirement) {
       throw new Error("Requirement not found");
@@ -696,20 +611,18 @@ export async function updateRequirementStatus(requirementId: string, status: sch
 
     const previousStatus = requirement.status;
 
-    tx.update(schema.readinessRequirements)
+    await tx
+      .update(schema.readinessRequirements)
       .set({ status, lastCheckedAt: new Date().toISOString() })
-      .where(eq(schema.readinessRequirements.id, requirementId))
-      .run();
+      .where(eq(schema.readinessRequirements.id, requirementId));
 
-    // Recalculate case readiness
-    const reqs = tx
+    const reqs = await tx
       .select()
       .from(schema.readinessRequirements)
-      .where(eq(schema.readinessRequirements.surgicalCaseId, requirement.surgicalCaseId))
-      .all();
+      .where(eq(schema.readinessRequirements.surgicalCaseId, requirement.surgicalCaseId));
 
     const calculation = calculateReadiness(
-      reqs.map(r => ({
+      reqs.map((r) => ({
         id: r.id,
         requirementType: r.requirementType,
         category: r.category,
@@ -719,31 +632,28 @@ export async function updateRequirementStatus(requirementId: string, status: sch
       thresholds
     );
 
-    tx.update(schema.surgicalCases)
+    await tx
+      .update(schema.surgicalCases)
       .set({
         readinessScore: calculation.score,
         readinessStatus: calculation.status,
         updatedAt: new Date().toISOString(),
       })
-      .where(eq(schema.surgicalCases.id, requirement.surgicalCaseId))
-      .run();
+      .where(eq(schema.surgicalCases.id, requirement.surgicalCaseId));
 
-    // Log audit
-    tx.insert(schema.auditEvents)
-      .values({
-        id: auditId(),
-        caseId: requirement.surgicalCaseId,
-        actorUserId: (user as any).id,
-        actorType: "user",
-        eventType: "requirement_updated",
-        entityType: "readiness_requirement",
-        entityId: requirementId,
-        previousStateJson: JSON.stringify({ status: previousStatus, readiness: null }),
-        newStateJson: JSON.stringify({ status, readinessScore: calculation.score, readinessStatus: calculation.status }),
-        reason: `${requirement.requirementType.replace(/_/g, " ")} set to ${status.replace(/_/g, " ")} by ${user.name ?? "coordinator"}; readiness recalculated to ${calculation.score}%.`,
-        approvalStatus: "recorded",
-      })
-      .run();
+    await tx.insert(schema.auditEvents).values({
+      id: auditId(),
+      caseId: requirement.surgicalCaseId,
+      actorUserId: (user as any).id,
+      actorType: "user",
+      eventType: "requirement_updated",
+      entityType: "readiness_requirement",
+      entityId: requirementId,
+      previousStateJson: JSON.stringify({ status: previousStatus, readiness: null }),
+      newStateJson: JSON.stringify({ status, readinessScore: calculation.score, readinessStatus: calculation.status }),
+      reason: `${requirement.requirementType.replace(/_/g, " ")} set to ${status.replace(/_/g, " ")} by ${user.name ?? "coordinator"}; readiness recalculated to ${calculation.score}%.`,
+      approvalStatus: "recorded",
+    });
 
     revalidatePath("/cases");
     return { success: true, status: calculation.status, score: calculation.score };

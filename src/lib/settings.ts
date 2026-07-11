@@ -3,14 +3,13 @@ import { db } from "@/db/client";
 import { systemSettings } from "@/db/schema";
 import type { ReadinessThresholds } from "@/lib/readiness";
 
-function readSetting<T>(key: string, fallback: T): T {
+async function readSetting<T>(key: string, fallback: T): Promise<T> {
   try {
-    const [row] = db
+    const [row] = await db
       .select({ valueJson: systemSettings.valueJson })
       .from(systemSettings)
       .where(eq(systemSettings.key, key))
-      .limit(1)
-      .all();
+      .limit(1);
     if (row?.valueJson) return JSON.parse(row.valueJson) as T;
   } catch {
     // settings table may be missing before migration/seed
@@ -18,18 +17,18 @@ function readSetting<T>(key: string, fallback: T): T {
   return fallback;
 }
 
-export function getHospitalName(): string {
+export async function getHospitalName(): Promise<string> {
   return readSetting<string>("hospital_name", "Burjeel Hospital, Abu Dhabi");
 }
 
-export function getDefaultLanguage(): "en" | "ar" {
-  const lang = readSetting<string>("default_language", "en");
+export async function getDefaultLanguage(): Promise<"en" | "ar"> {
+  const lang = await readSetting<string>("default_language", "en");
   return lang === "ar" ? "ar" : "en";
 }
 
-export function getReadinessThresholds(): ReadinessThresholds {
+export async function getReadinessThresholds(): Promise<ReadinessThresholds> {
   return {
-    atRiskThreshold: readSetting<number>("warning_threshold", 90),
-    blockedThreshold: readSetting<number>("critical_threshold", 60),
+    atRiskThreshold: await readSetting<number>("warning_threshold", 90),
+    blockedThreshold: await readSetting<number>("critical_threshold", 60),
   };
 }

@@ -1,34 +1,35 @@
-import { drizzle } from "drizzle-orm/better-sqlite3";
-import Database from "better-sqlite3";
-import * as schema from "./schema";
-import path from "path";
+import { drizzle } from "drizzle-orm/libsql";
+import { createClient } from "@libsql/client";
 import fs from "fs";
-import os from "os";
+import path from "path";
+import * as schema from "./schema";
+import { SCHEMA_DDL } from "./ddl";
 
-const defaultDatabasePath = process.env.VERCEL
-  ? path.join(os.tmpdir(), "data", "caseready.db")
-  : "./data/caseready.db";
-const dbPath = process.env.DATABASE_PATH || defaultDatabasePath;
-
-const dir = path.dirname(dbPath);
-try {
-  if (!fs.existsSync(dir)) {
-    fs.mkdirSync(dir, { recursive: true });
+// Database connection.
+// - Production (Vercel): set TURSO_DATABASE_URL + TURSO_AUTH_TOKEN to use hosted Turso/libSQL.
+// - Local dev / tests: falls back to a local SQLite file via libSQL's `file:` URL.
+function resolveUrl(): { url: string; authToken?: string } {
+  const tursoUrl = process.env.TURSO_DATABASE_URL;
+  if (tursoUrl) {
+    return { url: tursoUrl, authToken: process.env.TURSO_AUTH_TOKEN };
   }
-  fs.accessSync(dir, fs.constants.W_OK);
-} catch (err) {
-  throw new Error(`Database directory is not writable or cannot be created: ${path.resolve(dir)}`);
+  const filePath =
+    process.env.DATABASE_PATH || (process.env.VERCEL ? path.join("/tmp", "caseready.db") : "./data/caseready.db");
+  // Ensure the directory exists for local file-based databases.
+  try {
+    fs.mkdirSync(path.dirname(path.resolve(filePath)), { recursive: true });
+  } catch {
+    // best-effort; libSQL will surface a clear error if the path is unusable
+  }
+  return { url: `file:${filePath}` };
 }
 
-let sqlite: Database.Database;
-try {
-  sqlite = new Database(dbPath);
-  sqlite.pragma("journal_mode = WAL");
-  sqlite.pragma("foreign_keys = ON");
-  sqlite.pragma("busy_timeout = 5000");
-} catch (err) {
-  const message = err instanceof Error ? err.message : "Unknown SQLite error";
-  throw new Error(`Unable to open SQLite database at ${path.resolve(dbPath)}: ${message}`);
-}
+const { url, authToken } = resolveUrl();
 
-export const db = drizzle(sqlite, { schema });
+export const client = createClient({ url, authToken });
+export const db = drizzle(client, { schema });
+
+// Apply the schema if it is missing (idempotent). Safe to call on every cold start.
+export async function ensureSchema() {
+  await client.executeMultiple(SCHEMA_DDL);
+}

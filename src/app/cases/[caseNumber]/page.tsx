@@ -20,7 +20,7 @@ export default async function CaseDetailPage({ params }: PageProps) {
   const { caseNumber } = params;
 
   // 1. Fetch main case details
-  const [sCase] = db
+  const [sCase] = await db
     .select({
       id: surgicalCases.id,
       caseNumber: surgicalCases.caseNumber,
@@ -48,35 +48,35 @@ export default async function CaseDetailPage({ params }: PageProps) {
   }
 
   // 2. Fetch requirements
-  const requirements = db
+  const requirements = await db
     .select()
     .from(readinessRequirements)
     .where(eq(readinessRequirements.surgicalCaseId, sCase.id))
     .all();
 
   // 3. Fetch evidence documents
-  const evidence = db
+  const evidence = await db
     .select()
     .from(evidenceDocuments)
     .where(eq(evidenceDocuments.surgicalCaseId, sCase.id))
     .all();
 
   // 4. Fetch action items
-  const actions = db
+  const actions = await db
     .select()
     .from(actionItems)
     .where(eq(actionItems.surgicalCaseId, sCase.id))
     .all();
 
   // 5. Fetch communications
-  const comms = db
+  const comms = await db
     .select()
     .from(communications)
     .where(eq(communications.surgicalCaseId, sCase.id))
     .all();
 
   // 6. Fetch audit trail for the case
-  const audit = db
+  const audit = await db
     .select({
       id: auditEvents.id,
       actorType: auditEvents.actorType,

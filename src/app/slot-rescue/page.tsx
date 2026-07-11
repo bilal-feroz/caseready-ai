@@ -12,7 +12,7 @@ export default async function SlotRescuePage() {
   }
 
   // 1. Fetch the active demo OR slot, including rescued status after officer approval.
-  const [slot] = db
+  const [slot] = await db
     .select({
       id: operatingRoomSlots.id,
       operatingRoomId: operatingRoomSlots.operatingRoomId,
@@ -35,7 +35,7 @@ export default async function SlotRescuePage() {
 
   // 2. Fetch candidates for this slot
   const candidates = slot
-    ? db
+    ? await db
         .select({
           id: standbyCandidates.id,
           overallScore: standbyCandidates.overallScore,
@@ -68,7 +68,7 @@ export default async function SlotRescuePage() {
 
   // 3. Fetch active proposals for this slot
   const proposals = slot
-    ? db
+    ? await db
         .select({
           id: replacementProposals.id,
           status: replacementProposals.status,

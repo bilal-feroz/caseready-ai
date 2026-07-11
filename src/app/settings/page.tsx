@@ -11,7 +11,7 @@ export default async function SettingsPage() {
     redirect("/login");
   }
 
-  const settings = db.select().from(systemSettings).all();
+  const settings = await db.select().from(systemSettings);
   const get = (key: string, fallback: string) => settings.find((s) => s.key === key)?.valueJson ?? fallback;
   const hospitalName = JSON.parse(get("hospital_name", '"Burjeel Hospital"'));
   const warningThreshold = JSON.parse(get("warning_threshold", "90"));

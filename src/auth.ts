@@ -5,6 +5,7 @@ import { db } from "@/db/client";
 import { users } from "@/db/schema";
 import { eq } from "drizzle-orm";
 import bcrypt from "bcryptjs";
+import { ensureDbReady } from "@/db/provision";
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
   ...authConfig,
@@ -18,12 +19,14 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       async authorize(credentials) {
         if (!credentials?.email || !credentials?.password) return null;
 
-        const [user] = db
+        // Ensures a fresh database (e.g. an empty Turso instance) is provisioned + seeded.
+        await ensureDbReady();
+
+        const [user] = await db
           .select()
           .from(users)
           .where(eq(users.email, credentials.email as string))
-          .limit(1)
-          .all();
+          .limit(1);
 
         if (!user) return null;
 

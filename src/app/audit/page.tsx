@@ -30,7 +30,7 @@ export default async function AuditPage({ searchParams }: PageProps) {
   const pageNum = parseInt(searchParams.page || "1", 10);
   const pageSize = 10;
 
-  let events = db
+  let events = await db
     .select({
       id: auditEvents.id,
       caseId: auditEvents.caseId,
@@ -75,7 +75,7 @@ export default async function AuditPage({ searchParams }: PageProps) {
 
   // Distinct types computed from the full (unfiltered by type) set for stable options.
   const distinctTypes = Array.from(
-    new Set(db.select({ t: auditEvents.eventType }).from(auditEvents).all().map((e) => e.t))
+    new Set((await db.select({ t: auditEvents.eventType }).from(auditEvents)).map((e) => e.t))
   ).sort();
 
   return (

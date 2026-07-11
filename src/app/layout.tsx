@@ -3,6 +3,7 @@ import type { Metadata } from "next";
 import "./globals.css";
 import { auth } from "@/auth";
 import { getHospitalName, getDefaultLanguage } from "@/lib/settings";
+import { ensureDbReady } from "@/db/provision";
 import AppShell from "@/components/AppShell";
 
 export const metadata: Metadata = {
@@ -15,9 +16,10 @@ export default async function RootLayout({
 }: {
   children: React.ReactNode;
 }) {
+  await ensureDbReady();
   const session = await auth();
-  const hospitalName = session ? getHospitalName() : "";
-  const defaultLanguage = session ? getDefaultLanguage() : "en";
+  const hospitalName = session ? await getHospitalName() : "";
+  const defaultLanguage = session ? await getDefaultLanguage() : "en";
 
   return (
     <html lang="en">

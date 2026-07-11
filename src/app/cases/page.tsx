@@ -29,10 +29,10 @@ export default async function CasesPage({ searchParams }: PageProps) {
   const sortBy = searchParams.sort || "time";
 
   // Fetch lists for filters
-  const rooms = db.select().from(operatingRooms).all();
-  const allSurgeons = db.select().from(surgeons).all();
+  const rooms = await db.select().from(operatingRooms);
+  const allSurgeons = await db.select().from(surgeons);
 
-  let casesList = db
+  let casesList = await db
     .select({
       id: surgicalCases.id,
       caseNumber: surgicalCases.caseNumber,

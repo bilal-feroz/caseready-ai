@@ -12,7 +12,7 @@ export default async function ActionsPage() {
   }
 
   // Fetch actions
-  const allActions = db
+  const allActions = await db
     .select({
       id: actionItems.id,
       title: actionItems.title,
@@ -35,7 +35,7 @@ export default async function ActionsPage() {
     .all();
 
   // Fetch communications
-  const comms = db.select().from(communications).all();
+  const comms = await db.select().from(communications);
 
   return (
     <ActionsClient
