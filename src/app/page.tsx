@@ -123,6 +123,7 @@ export default async function DashboardPage({ searchParams }: PageProps) {
             <span className="font-title-md text-title-md text-on-surface">Monday, 13 July 2026</span>
           </div>
           <Link
+            data-tour="attention-queue-button"
             href="/actions"
             className="bg-primary text-on-primary font-title-md text-title-md py-2 px-6 rounded-lg hover:bg-primary-container transition-all shadow-sm text-center focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
           >
@@ -132,7 +133,7 @@ export default async function DashboardPage({ searchParams }: PageProps) {
       </div>
 
       {/* Readiness KPI strip — each status tile filters the case list */}
-      <div className="w-full grid grid-cols-2 md:grid-cols-5 bg-surface-container-lowest border border-outline-variant rounded-xl shadow-sm mb-stack_lg overflow-hidden divide-x divide-y md:divide-y-0 divide-outline-variant">
+      <div data-tour="dashboard-kpis" className="w-full grid grid-cols-2 md:grid-cols-5 bg-surface-container-lowest border border-outline-variant rounded-xl shadow-sm mb-stack_lg overflow-hidden divide-x divide-y md:divide-y-0 divide-outline-variant">
         {kpiTiles.map((t) => (
           <Link
             key={t.key}

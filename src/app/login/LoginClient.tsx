@@ -54,10 +54,10 @@ export default function LoginClient({ demoMode }: LoginClientProps) {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-[#F7F5F1] p-container_padding font-body-md text-body-md text-on-surface">
-      <div className="w-full max-w-[440px] bg-surface-container-lowest border border-outline-variant rounded-xl p-stack_lg shadow-md">
+    <div className="min-h-screen flex items-center justify-center bg-transparent p-container_padding font-body-md text-body-md text-on-surface relative overflow-hidden">
+      <div className="glass-panel w-full max-w-[460px] border border-white/80 rounded-2xl p-8 shadow-lg">
         <div className="text-center mb-stack_lg">
-          <h1 className="font-headline-md text-primary font-black mb-1">CaseReady AI</h1>
+          <h1 className="font-headline-md text-on-surface font-black mb-1 tracking-tight">CaseReady AI</h1>
           <p className="font-caption text-on-surface-variant">Surgical Readiness Command Centre Login</p>
         </div>
 

@@ -42,8 +42,16 @@ export default function Header({ user, defaultLanguage, onMenuClick }: HeaderPro
     const storedLanguage = sessionStorage.getItem("caseready-language") || defaultLanguage;
     setLanguage(storedLanguage);
 
-    const openHelp = () => setHelpOpen(true);
-    const openSupport = () => setSupportOpen(true);
+    const openHelp = () => {
+      setHelpOpen(true);
+      setSupportOpen(false);
+      setNotificationsOpen(false);
+    };
+    const openSupport = () => {
+      setSupportOpen(true);
+      setHelpOpen(false);
+      setNotificationsOpen(false);
+    };
     window.addEventListener("caseready:help", openHelp);
     window.addEventListener("caseready:support", openSupport);
     return () => {
@@ -97,7 +105,7 @@ export default function Header({ user, defaultLanguage, onMenuClick }: HeaderPro
   };
 
   return (
-    <header className="h-[68px] sticky top-0 bg-surface-container-low border-b border-outline-variant flex justify-between items-center px-4 md:px-container_padding z-30 gap-3">
+    <header className="glass-header h-[72px] sticky top-0 border-b border-outline-variant flex justify-between items-center px-4 md:px-container_padding z-30 gap-3">
       <div className="flex items-center gap-3 md:gap-stack_lg min-w-0">
         <button
           type="button"
@@ -132,7 +140,11 @@ export default function Header({ user, defaultLanguage, onMenuClick }: HeaderPro
               type="button"
               aria-label="Notifications"
               aria-expanded={notificationsOpen}
-              onClick={() => setNotificationsOpen((open) => !open)}
+              onClick={() => {
+                setNotificationsOpen((open) => !open);
+                setHelpOpen(false);
+                setSupportOpen(false);
+              }}
               className="p-2 text-on-surface-variant hover:text-primary rounded-full hover:bg-surface-container-high transition-all relative focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
             >
               <span className="material-symbols-outlined" aria-hidden="true">notifications</span>
@@ -144,7 +156,7 @@ export default function Header({ user, defaultLanguage, onMenuClick }: HeaderPro
               <div
                 role="dialog"
                 aria-label="Notifications"
-                className="absolute right-0 top-full mt-1 w-[min(360px,calc(100vw-24px))] bg-surface-container-lowest border border-outline-variant rounded-lg shadow-xl overflow-hidden z-50"
+                className="absolute right-0 top-full mt-1 w-[min(360px,calc(100vw-24px))] glass-panel border border-outline-variant rounded-lg shadow-xl overflow-hidden z-50"
               >
                 <div className="px-4 py-3 border-b border-outline-variant flex items-center justify-between">
                   <p className="font-title-md text-title-md text-on-surface font-semibold">Notifications</p>
@@ -175,7 +187,11 @@ export default function Header({ user, defaultLanguage, onMenuClick }: HeaderPro
           <button
             type="button"
             aria-label="Help"
-            onClick={() => setHelpOpen(true)}
+            onClick={() => {
+              setHelpOpen(true);
+              setSupportOpen(false);
+              setNotificationsOpen(false);
+            }}
             className="p-2 text-on-surface-variant hover:text-primary rounded-full hover:bg-surface-container-high transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
           >
             <span className="material-symbols-outlined" aria-hidden="true">help</span>
@@ -191,15 +207,15 @@ export default function Header({ user, defaultLanguage, onMenuClick }: HeaderPro
             <span className="font-caption text-[10px] uppercase">{language}</span>
           </button>
         </div>
-        <div className="w-8 h-8 rounded-full bg-primary-container flex items-center justify-center font-bold text-white text-[12px] border border-outline-variant" aria-hidden="true">
+        <div className="w-9 h-9 rounded-full bg-gradient-to-br from-[#8D447D] to-[#3F0037] flex items-center justify-center font-bold text-white text-[12px] border border-outline-variant" aria-hidden="true">
           {user?.name?.[0] || "CR"}
         </div>
       </div>
 
       {helpOpen && (
         <>
-          <div className="fixed inset-0 bg-black/30 z-40" onClick={() => setHelpOpen(false)} aria-hidden="true" />
-          <aside role="dialog" aria-modal="true" aria-label="CaseReady AI Help" className="fixed top-0 right-0 h-full w-[420px] max-w-full bg-surface-container-lowest border-l border-outline-variant shadow-xl z-50 flex flex-col">
+          <div className="fixed inset-0 bg-[#2A1025]/35 backdrop-blur-[2px] z-[90]" onClick={() => setHelpOpen(false)} aria-hidden="true" />
+          <aside role="dialog" aria-modal="true" aria-label="CaseReady AI Help" className="fixed top-0 right-0 h-full w-[420px] max-w-full bg-surface-container-lowest border-l border-outline-variant shadow-xl z-[100] flex flex-col">
             <div className="px-container_padding py-4 border-b border-outline-variant flex items-center justify-between">
               <div>
                 <h3 className="font-title-md text-title-md text-on-surface font-semibold">CaseReady AI Help</h3>
@@ -233,8 +249,8 @@ export default function Header({ user, defaultLanguage, onMenuClick }: HeaderPro
 
       {supportOpen && (
         <>
-          <div className="fixed inset-0 bg-black/30 z-40" onClick={() => setSupportOpen(false)} aria-hidden="true" />
-          <div role="dialog" aria-modal="true" aria-label="Demo Support" className="fixed top-1/2 left-1/2 w-[420px] max-w-[calc(100vw-32px)] -translate-x-1/2 -translate-y-1/2 bg-surface-container-lowest border border-outline-variant rounded-lg shadow-xl z-50">
+          <div className="fixed inset-0 bg-[#2A1025]/35 backdrop-blur-[2px] z-[90]" onClick={() => setSupportOpen(false)} aria-hidden="true" />
+          <div role="dialog" aria-modal="true" aria-label="Demo Support" className="fixed top-1/2 left-1/2 w-[440px] max-w-[calc(100vw-32px)] -translate-x-1/2 -translate-y-1/2 glass-panel border border-outline-variant rounded-2xl shadow-xl z-[100] overflow-hidden">
             <div className="px-container_padding py-4 border-b border-outline-variant flex items-center justify-between">
               <h3 className="font-title-md text-title-md text-on-surface font-semibold">Demo Support</h3>
               <button type="button" aria-label="Close support" onClick={() => setSupportOpen(false)} className="text-on-surface-variant hover:text-primary">

@@ -162,7 +162,7 @@ export default function SlotRescueClient({ slot, candidates, proposals, userRole
 
       {/* Best Match */}
       {bestCandidate && (
-        <div className="bg-surface-container-lowest border-2 border-primary rounded-xl shadow-sm mb-stack_lg overflow-hidden">
+        <div data-tour="slot-recommendation" className="bg-surface-container-lowest border-2 border-primary rounded-xl shadow-sm mb-stack_lg overflow-hidden">
           <div className="flex flex-col lg:flex-row">
             <div className="flex-1 p-container_padding">
               <div className="flex items-center gap-3 mb-stack_md">

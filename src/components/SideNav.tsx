@@ -31,6 +31,7 @@ export default function SideNav({ user, hospitalName, mobileOpen, onNavigate }: 
 
   const openHelp = () => window.dispatchEvent(new Event("caseready:help"));
   const openSupport = () => window.dispatchEvent(new Event("caseready:support"));
+  const openDemoTour = () => window.dispatchEvent(new Event("caseready:demo-tour"));
 
   return (
     <nav
@@ -64,6 +65,7 @@ export default function SideNav({ user, hospitalName, mobileOpen, onNavigate }: 
             <li key={link.name}>
               <Link
                 href={link.href}
+                data-tour={link.name === "Surgical Cases" ? "nav-cases" : link.name === "Slot Rescue" ? "nav-slot-rescue" : undefined}
                 onClick={onNavigate}
                 aria-current={isActive ? "page" : undefined}
                 className={`flex items-center gap-3 px-container_padding py-3 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-inset ${
@@ -82,6 +84,14 @@ export default function SideNav({ user, hospitalName, mobileOpen, onNavigate }: 
         })}
       </ul>
       <div className="mt-auto px-container_padding border-t border-outline-variant pt-stack_sm">
+        <button
+          type="button"
+          onClick={openDemoTour}
+          className="w-full flex items-center gap-3 py-2 text-primary hover:bg-primary-fixed/40 transition-colors rounded-lg px-2 -mx-2 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+        >
+          <span className="material-symbols-outlined" aria-hidden="true">smart_display</span>
+          <span className="font-body-md text-body-md">Demo Tour</span>
+        </button>
         <button
           type="button"
           onClick={openHelp}

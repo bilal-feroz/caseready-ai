@@ -30,6 +30,9 @@ export default function ActionsClient({ initialActions, comms }: ActionsClientPr
 
   const selectedAction = initialActions.find((a) => a.id === selectedActionId);
   const selectedComms = comms.find((c) => c.actionItemId === selectedActionId);
+  const guidedActionId = initialActions.find((action) =>
+    action.status === "pending" && comms.some((comm) => comm.actionItemId === action.id)
+  )?.id;
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => e.key === "Escape" && setSelectedActionId(null);
@@ -154,6 +157,7 @@ export default function ActionsClient({ initialActions, comms }: ActionsClientPr
                 <li key={a.id}>
                   <button
                     onClick={() => handleOpenAction(a.id)}
+                    data-tour={a.id === guidedActionId ? "first-action-row" : undefined}
                     aria-expanded={isSelected}
                     className={`w-full text-left flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 px-stack_md py-3 hover:bg-surface-container-low transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-inset ${
                       isSelected ? "bg-primary-fixed/20" : ""
@@ -193,6 +197,7 @@ export default function ActionsClient({ initialActions, comms }: ActionsClientPr
         aria-modal={selectedAction ? "true" : undefined}
         aria-label="Review communication"
         aria-hidden={!selectedAction}
+        data-tour={selectedActionId === guidedActionId ? "action-drawer" : undefined}
         className={`fixed top-0 right-0 h-full w-[460px] max-w-full bg-surface-container-lowest border-l border-outline-variant shadow-xl z-40 flex flex-col transition-transform duration-300 motion-reduce:transition-none ${
           selectedAction ? "translate-x-0" : "translate-x-full"
         }`}
@@ -209,7 +214,7 @@ export default function ActionsClient({ initialActions, comms }: ActionsClientPr
                   <p className="font-caption text-caption text-on-surface-variant truncate">{selectedAction.caseNumber} · {selectedAction.ownerDepartment}</p>
                 </div>
               </div>
-              <button onClick={() => setSelectedActionId(null)} aria-label="Close" className="p-1 text-on-surface-variant hover:text-primary transition-colors rounded-full hover:bg-surface-container-high">
+              <button data-tour="close-action-drawer" onClick={() => setSelectedActionId(null)} aria-label="Close" className="p-1 text-on-surface-variant hover:text-primary transition-colors rounded-full hover:bg-surface-container-high">
                 <span className="material-symbols-outlined" aria-hidden="true">close</span>
               </button>
             </div>

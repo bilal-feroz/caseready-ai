@@ -3,6 +3,7 @@
 import { useState } from "react";
 import SideNav from "@/components/SideNav";
 import Header from "@/components/Header";
+import DemoTour from "@/components/DemoTour";
 
 interface ShellUser {
   name?: string | null;
@@ -32,6 +33,8 @@ export default function AppShell({ user, hospitalName, defaultLanguage, children
           onClick={closeNav}
         />
       )}
+
+      <DemoTour />
 
       <SideNav
         user={user}

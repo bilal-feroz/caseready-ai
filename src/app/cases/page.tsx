@@ -245,7 +245,7 @@ export default async function CasesPage({ searchParams }: PageProps) {
                   return (
                     <tr key={c.id} className="hover:bg-surface-container-low transition-colors cursor-pointer h-[72px]">
                       <td className="py-3 px-4 font-title-md text-primary font-bold">
-                        <Link href={`/cases/${c.caseNumber}`} className="block h-full w-full focus-visible:outline-none focus-visible:underline">{c.caseNumber}</Link>
+                        <Link data-tour={c.caseNumber === "CR-1051" ? "case-example" : undefined} href={`/cases/${c.caseNumber}`} className="block h-full w-full focus-visible:outline-none focus-visible:underline">{c.caseNumber}</Link>
                       </td>
                       <td className="py-3 px-4 text-on-surface-variant tabular-nums">
                         <Link href={`/cases/${c.caseNumber}`} className="block h-full w-full">{formatTime(c.scheduledStart)}</Link>

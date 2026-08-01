@@ -186,6 +186,7 @@ export default function CaseDetailClient({ sCase, requirements, evidence, action
           <button
             key={tab.key}
             role="tab"
+            data-tour={tab.key === "documents" ? "documents-tab" : undefined}
             aria-selected={activeTab === tab.key}
             onClick={() => setActiveTab(tab.key)}
             className={`font-label-md text-label-md py-3 whitespace-nowrap transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-inset ${
@@ -298,13 +299,14 @@ export default function CaseDetailClient({ sCase, requirements, evidence, action
             <p className="text-on-surface-variant text-center py-4">No evidence documents attached to this case.</p>
           ) : (
             <div className="space-y-4">
-              {evidence.map((doc) => (
+              {evidence.map((doc, index) => (
                 <div key={doc.id} className="border border-outline-variant rounded-lg p-stack_md flex items-center justify-between gap-3 hover:bg-surface-container-low transition-colors">
                   <div className="min-w-0">
                     <p className="font-title-md font-semibold text-on-surface truncate">{doc.title}</p>
                     <p className="font-caption text-caption text-on-surface-variant">{doc.documentType} · confidence {doc.confidence}% · {doc.reviewStatus.replace(/_/g, " ")}</p>
                   </div>
                   <button
+                    data-tour={index === 0 ? "first-document" : undefined}
                     onClick={() => { const req = requirements.find((r) => r.id === doc.requirementId); if (req) setSelectedReqId(req.id); }}
                     className="px-3 py-1.5 bg-surface border border-outline-variant rounded-lg font-label-md text-label-md hover:border-primary hover:text-primary transition-all shrink-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
                   >
@@ -387,6 +389,7 @@ export default function CaseDetailClient({ sCase, requirements, evidence, action
             role="dialog"
             aria-modal="true"
             aria-label={`Evidence: ${selectedEvidence.title}`}
+            data-tour="evidence-panel"
             className="fixed top-0 right-0 h-full w-[420px] max-w-full bg-surface-container-lowest border-l border-outline-variant shadow-xl z-50 flex flex-col"
           >
             <div className="flex items-center justify-between px-stack_md py-3 border-b border-outline-variant bg-surface shrink-0">
@@ -394,7 +397,7 @@ export default function CaseDetailClient({ sCase, requirements, evidence, action
                 <span className="material-symbols-outlined text-on-surface-variant" style={{ fontSize: "20px" }} aria-hidden="true">description</span>
                 <h2 className="font-title-md text-title-md text-on-surface font-semibold truncate">{selectedEvidence.title}</h2>
               </div>
-              <button onClick={() => setSelectedReqId(null)} aria-label="Close evidence" className="p-1 text-on-surface-variant hover:text-primary transition-colors rounded-full hover:bg-surface-container-high">
+              <button data-tour="close-evidence" onClick={() => setSelectedReqId(null)} aria-label="Close evidence" className="p-1 text-on-surface-variant hover:text-primary transition-colors rounded-full hover:bg-surface-container-high">
                 <span className="material-symbols-outlined" style={{ fontSize: "20px" }} aria-hidden="true">close</span>
               </button>
             </div>
