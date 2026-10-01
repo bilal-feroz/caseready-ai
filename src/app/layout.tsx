@@ -6,6 +6,11 @@ import { getHospitalName, getDefaultLanguage } from "@/lib/settings";
 import { ensureDbReady } from "@/db/provision";
 import AppShell from "@/components/AppShell";
 
+// Every page reads the session and live database state, so nothing can be prerendered at
+// build time. Without this, `next build` queries the database while prerendering and fails
+// (SQLITE_BUSY locks locally; no database is reachable at all during a Vercel build).
+export const dynamic = "force-dynamic";
+
 export const metadata: Metadata = {
   title: "CaseReady AI - Surgical Readiness Command Centre",
   description: "Human-supervised surgical readiness and operating-room recovery platform.",

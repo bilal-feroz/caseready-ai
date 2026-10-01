@@ -27,6 +27,12 @@ function auditId() {
   return `au-evt-${Date.now()}-${auditCounter}`;
 }
 
+// Id + ISO timestamp for a new audit row. The column default (SQLite CURRENT_TIMESTAMP) uses a
+// different format from the seeded ISO rows, which breaks the newest-first ordering.
+function auditStamp() {
+  return { id: auditId(), createdAt: new Date().toISOString() };
+}
+
 const idSchema = z.string().trim().min(1).max(128);
 
 // Server-side sign-out (Auth.js v5). Using the server action avoids the client-side
@@ -115,7 +121,7 @@ export async function updateEvidenceStatus(
       .where(eq(schema.surgicalCases.id, evidence.surgicalCaseId));
 
     await tx.insert(schema.auditEvents).values({
-      id: auditId(),
+      ...auditStamp(),
       caseId: evidence.surgicalCaseId,
       actorUserId: (user as any).id,
       actorType: "user",
@@ -184,6 +190,8 @@ export async function requestClinicalReview(requirementId: string) {
         status: "pending",
         ownerDepartment: "Clinical Review",
         requiresApproval: true,
+        createdAt: now,
+        updatedAt: now,
       });
     }
 
@@ -201,7 +209,7 @@ export async function requestClinicalReview(requirementId: string) {
       .where(eq(schema.surgicalCases.id, requirement.surgicalCaseId));
 
     await tx.insert(schema.auditEvents).values({
-      id: auditId(),
+      ...auditStamp(),
       caseId: requirement.surgicalCaseId,
       actorUserId: (user as any).id,
       actorType: "user",
@@ -270,7 +278,7 @@ export async function approveCommunication(communicationId: string, enText: stri
     }
 
     await tx.insert(schema.auditEvents).values({
-      id: auditId(),
+      ...auditStamp(),
       caseId: comms.surgicalCaseId,
       actorUserId: (user as any).id,
       actorType: "user",
@@ -314,7 +322,7 @@ export async function saveCommunicationDraft(communicationId: string, enText: st
       .where(eq(schema.communications.id, communicationId));
 
     await tx.insert(schema.auditEvents).values({
-      id: auditId(),
+      ...auditStamp(),
       caseId: comms.surgicalCaseId,
       actorUserId: (user as any).id,
       actorType: "user",
@@ -346,7 +354,7 @@ export async function returnCommunicationForReview(communicationId: string, note
     if (!comms) throw new Error("Communication draft not found");
 
     await tx.insert(schema.auditEvents).values({
-      id: auditId(),
+      ...auditStamp(),
       caseId: comms.surgicalCaseId,
       actorUserId: (user as any).id,
       actorType: "user",
@@ -383,15 +391,30 @@ export async function proposeReplacement(slotId: string, proposedCaseId: string)
     if (!slot) {
       throw new Error("OR slot not found");
     }
+    // Refusals are returned rather than thrown: production builds hide thrown messages from the client.
+    if (slot.status !== "endangered") {
+      return { success: false, error: "This slot has already been rescued." };
+    }
 
     const [candidate] = await tx
       .select({ eligible: schema.standbyCandidates.eligible })
       .from(schema.standbyCandidates)
       .where(and(eq(schema.standbyCandidates.slotId, slotId), eq(schema.standbyCandidates.surgicalCaseId, proposedCaseId)))
       .limit(1);
-    if (!candidate) throw new Error("Proposed case is not a standby candidate for this slot.");
-    if (!candidate.eligible) throw new Error("Proposed case is ineligible and cannot be proposed.");
+    if (!candidate) return { success: false, error: "That case is not a standby candidate for this slot." };
+    if (!candidate.eligible) return { success: false, error: "That candidate is ineligible and cannot be proposed." };
 
+    // One open proposal per slot, so the scheduling officer never faces competing swaps.
+    const [pending] = await tx
+      .select({ id: schema.replacementProposals.id })
+      .from(schema.replacementProposals)
+      .where(and(eq(schema.replacementProposals.slotId, slotId), eq(schema.replacementProposals.status, "pending")))
+      .limit(1);
+    if (pending) {
+      return { success: false, error: "A proposal for this slot is already awaiting scheduling-officer review." };
+    }
+
+    const now = new Date().toISOString();
     const proposalId = `prop-${Date.now()}-${auditCounter}`;
     await tx.insert(schema.replacementProposals).values({
       id: proposalId,
@@ -400,10 +423,12 @@ export async function proposeReplacement(slotId: string, proposedCaseId: string)
       proposedCaseId,
       status: "pending",
       proposedBy: (user as any).id,
+      createdAt: now,
+      updatedAt: now,
     });
 
     await tx.insert(schema.auditEvents).values({
-      id: auditId(),
+      ...auditStamp(),
       caseId: proposedCaseId,
       actorUserId: (user as any).id,
       actorType: "user",
@@ -427,21 +452,22 @@ export async function requestPatientConfirmation(slotId: string, proposedCaseId:
   idSchema.parse(proposedCaseId);
 
   const [slot] = await db
-    .select()
+    .select({ id: schema.operatingRoomSlots.id, roomCode: schema.operatingRooms.code })
     .from(schema.operatingRoomSlots)
+    .innerJoin(schema.operatingRooms, eq(schema.operatingRoomSlots.operatingRoomId, schema.operatingRooms.id))
     .where(eq(schema.operatingRoomSlots.id, slotId))
     .limit(1);
   if (!slot) throw new Error("OR slot not found");
 
   await db.insert(schema.auditEvents).values({
-    id: auditId(),
+    ...auditStamp(),
     caseId: proposedCaseId,
     actorUserId: (user as any).id,
     actorType: "user",
     eventType: "patient_confirmation_requested",
     entityType: "surgical_case",
     entityId: proposedCaseId,
-    reason: `Standby confirmation requested for the OR 03 slot by ${user.name ?? "coordinator"}. Simulated request recorded — no external message was sent.`,
+    reason: `Standby confirmation requested for the ${slot.roomCode} slot by ${user.name ?? "coordinator"}. Simulated request recorded — no external message was sent.`,
     approvalStatus: "recorded",
   });
 
@@ -470,6 +496,18 @@ export async function approveProposal(proposalId: string, approve: boolean, reje
     if (!proposal) {
       throw new Error("Proposal not found");
     }
+    if (proposal.status !== "pending") {
+      return { success: false, error: `This proposal has already been ${proposal.status}.` };
+    }
+
+    const [slot] = await tx
+      .select({ status: schema.operatingRoomSlots.status })
+      .from(schema.operatingRoomSlots)
+      .where(eq(schema.operatingRoomSlots.id, proposal.slotId))
+      .limit(1);
+    if (approve && slot?.status === "rescued") {
+      return { success: false, error: "This slot has already been rescued by another approved swap." };
+    }
 
     const previousState = { status: proposal.status };
     const status = approve ? "approved" : "rejected";
@@ -485,10 +523,35 @@ export async function approveProposal(proposalId: string, approve: boolean, reje
         .update(schema.operatingRoomSlots)
         .set({ status: "rescued" })
         .where(eq(schema.operatingRoomSlots.id, proposal.slotId));
+
+      // The slot is filled, so any competing proposal for it is closed out (and audited).
+      const competing = await tx
+        .select({ id: schema.replacementProposals.id, proposedCaseId: schema.replacementProposals.proposedCaseId })
+        .from(schema.replacementProposals)
+        .where(and(eq(schema.replacementProposals.slotId, proposal.slotId), eq(schema.replacementProposals.status, "pending")));
+      for (const other of competing) {
+        await tx
+          .update(schema.replacementProposals)
+          .set({ status: "rejected", approvedBy: (user as any).id, rejectionReason: "Slot filled by another approved swap.", updatedAt: now })
+          .where(eq(schema.replacementProposals.id, other.id));
+        await tx.insert(schema.auditEvents).values({
+          ...auditStamp(),
+          caseId: other.proposedCaseId,
+          actorUserId: (user as any).id,
+          actorType: "user",
+          eventType: "proposal_rejected",
+          entityType: "replacement_proposal",
+          entityId: other.id,
+          previousStateJson: JSON.stringify({ status: "pending" }),
+          newStateJson: JSON.stringify({ status: "rejected" }),
+          reason: "Proposal closed automatically: the slot was filled by another approved swap.",
+          approvalStatus: "rejected",
+        });
+      }
     }
 
     await tx.insert(schema.auditEvents).values({
-      id: auditId(),
+      ...auditStamp(),
       caseId: proposal.proposedCaseId,
       actorUserId: (user as any).id,
       actorType: "user",
@@ -562,7 +625,7 @@ export async function resetDemoData() {
     await seedDatabase();
 
     await db.insert(schema.auditEvents).values({
-      id: `au-reset-${Date.now()}`,
+      ...auditStamp(),
       caseId: null,
       actorUserId: (user as any).id,
       actorType: "user",
@@ -642,7 +705,7 @@ export async function updateRequirementStatus(requirementId: string, status: sch
       .where(eq(schema.surgicalCases.id, requirement.surgicalCaseId));
 
     await tx.insert(schema.auditEvents).values({
-      id: auditId(),
+      ...auditStamp(),
       caseId: requirement.surgicalCaseId,
       actorUserId: (user as any).id,
       actorType: "user",

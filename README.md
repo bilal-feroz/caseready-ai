@@ -322,7 +322,20 @@ For container deployment, mount a persistent directory and configure:
 DATABASE_PATH=/app/data/caseready.db
 ```
 
-A serverless platform without persistent filesystem storage is not suitable for this SQLite configuration.
+A serverless platform without persistent filesystem storage is not suitable for a local SQLite file. On Vercel, use a hosted Turso (libSQL) database instead, as described below.
+
+---
+
+## Deploying to Vercel
+
+Vercel functions have no shared persistent disk, so the deployment needs a hosted Turso (libSQL) database. Without one, each function instance gets its own throwaway copy of the data and changes made on one page vanish on another; `/api/health` reports this as unhealthy.
+
+1. Import the GitHub repository into Vercel. The framework preset (Next.js) and default build settings work as-is.
+2. Add a database: in the Vercel project, open **Storage → Create Database → Turso** and connect it to the project. Alternatively, create a database at [turso.tech](https://turso.tech) and set `TURSO_DATABASE_URL` and `TURSO_AUTH_TOKEN` yourself. Custom-prefixed variables from the Marketplace integration (e.g. `STORAGE_DATABASE_URL` / `STORAGE_AUTH_TOKEN`) are detected automatically.
+3. Set `AUTH_SECRET` to a random value (`openssl rand -base64 32`). Without it, a public fallback secret is used.
+4. Deploy, then open `/api/health` and confirm `"status": "healthy"`.
+
+The empty database provisions and seeds itself on the first request. In demo mode, the synthetic operating list is always dated "tomorrow" (UAE time): if the stored list has become today's or older, it is re-seeded automatically on the next cold start. To clear rehearsal changes before a demo, sign in as the administrator and use **Settings → Reset demo data**.
 
 ---
 

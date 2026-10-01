@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { updateEvidenceStatus, updateRequirementStatus, requestClinicalReview } from "@/app/actions";
-import { formatSurgeonName, formatDate, formatTime, formatDateTime, initials } from "@/lib/format";
+import { formatSurgeonName, formatDate, formatTime, formatEventDateTime, initials } from "@/lib/format";
 
 interface CaseDetailProps {
   sCase: any;
@@ -284,7 +284,7 @@ export default function CaseDetailClient({ sCase, requirements, evidence, action
                   <div className="absolute left-[-5px] top-1.5 w-2.5 h-2.5 rounded-full bg-primary" aria-hidden="true"></div>
                   <p className="font-title-md text-on-surface font-semibold capitalize">{evt.eventType.replace(/_/g, " ")}</p>
                   <p className="font-body-md text-on-surface-variant mt-0.5">{evt.reason}</p>
-                  <p className="font-caption text-caption text-on-surface-variant mt-1">{formatDateTime(evt.createdAt)}</p>
+                  <p className="font-caption text-caption text-on-surface-variant mt-1">{formatEventDateTime(evt.createdAt)}</p>
                 </div>
               ))}
             </div>
@@ -327,7 +327,8 @@ export default function CaseDetailClient({ sCase, requirements, evidence, action
           ) : (
             <div className="space-y-4">
               {comms.map((c) => {
-                const content = JSON.parse(c.draftContent);
+                // Once sent, show the approved final text (it may have been edited before approval).
+                const content = JSON.parse(c.status === "sent" && c.finalContent ? c.finalContent : c.draftContent);
                 return (
                   <div key={c.id} className="border border-outline-variant rounded-lg p-stack_md">
                     <div className="flex justify-between items-center mb-2">
@@ -366,7 +367,7 @@ export default function CaseDetailClient({ sCase, requirements, evidence, action
                 ) : (
                   audit.map((evt) => (
                     <tr key={evt.id} className="border-b border-outline-variant hover:bg-surface-container-low transition-colors">
-                      <td className="py-3 px-4 font-caption text-caption text-on-surface-variant whitespace-nowrap">{formatDateTime(evt.createdAt)}</td>
+                      <td className="py-3 px-4 font-caption text-caption text-on-surface-variant whitespace-nowrap">{formatEventDateTime(evt.createdAt)}</td>
                       <td className="py-3 px-4">
                         <p className="font-title-md text-on-surface font-semibold capitalize">{evt.eventType.replace(/_/g, " ")}</p>
                         <p className="font-body-md text-on-surface-variant mt-0.5">{evt.reason}</p>
@@ -443,14 +444,14 @@ export default function CaseDetailClient({ sCase, requirements, evidence, action
               </button>
               <div className="flex gap-2">
                 <button
-                  disabled={loading}
+                  disabled={loading || selectedEvidence.reviewStatus === "flagged_incorrect"}
                   onClick={() => handleEvidenceAction("flagged_incorrect")}
                   className="flex-1 px-4 py-2 border border-error text-error rounded-lg font-label-md text-label-md hover:bg-error-container transition-colors disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-error"
                 >
                   Flag as Incorrect
                 </button>
                 <button
-                  disabled={loading}
+                  disabled={loading || selectedEvidence.reviewStatus === "acknowledged"}
                   onClick={() => handleEvidenceAction("acknowledged")}
                   className="flex-1 px-4 py-2 bg-primary text-on-primary rounded-lg font-label-md text-label-md hover:bg-primary-container transition-colors disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
                 >

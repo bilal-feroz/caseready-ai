@@ -1,6 +1,6 @@
 import fs from "fs";
 import path from "path";
-import { db } from "@/db/client";
+import { db, usingRemoteDatabase } from "@/db/client";
 import { users, surgicalCases, systemSettings } from "@/db/schema";
 import { getAuthSecret, getDatabasePath, isDemoMode } from "@/lib/env";
 
@@ -11,13 +11,17 @@ export async function validateStartup() {
     checks.authSecret = "AUTH_SECRET or NEXTAUTH_SECRET is required.";
   }
 
-  // For remote (Turso) or serverless (/tmp on Vercel) databases there is no fixed local
-  // path worth checking — the schema query below is the real health signal.
-  const usingTurso = Boolean(process.env.TURSO_DATABASE_URL);
-  const skipPathCheck = usingTurso || Boolean(process.env.VERCEL);
-  const dbPath = usingTurso ? "turso" : process.env.VERCEL ? "/tmp/caseready.db" : getDatabasePath();
-  if (skipPathCheck) {
+  // For remote (Turso) databases there is no local path worth checking — the schema query
+  // below is the real health signal.
+  const onVercel = Boolean(process.env.VERCEL);
+  const dbPath = usingRemoteDatabase ? "turso" : onVercel ? "/tmp/caseready.db" : getDatabasePath();
+  if (usingRemoteDatabase) {
     checks.databasePath = "ok";
+  } else if (onVercel) {
+    // /tmp is private to each serverless instance and wiped on cold start, so changes made on
+    // one page silently vanish on another. Fail loudly instead of demoing on it.
+    checks.databasePath =
+      "No persistent database: set TURSO_DATABASE_URL and TURSO_AUTH_TOKEN in the Vercel project settings.";
   } else {
     const dbDir = path.dirname(path.resolve(dbPath));
     try {

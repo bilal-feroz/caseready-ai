@@ -1,10 +1,10 @@
 import { db } from "@/db/client";
 import { surgicalCases, patients, surgeons, operatingRooms, actionItems } from "@/db/schema";
-import { eq } from "drizzle-orm";
+import { eq, inArray } from "drizzle-orm";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { auth } from "@/auth";
-import { formatSurgeonName, formatTime, initials } from "@/lib/format";
+import { formatLongDate, formatSurgeonName, formatTime, initials, uaeGreeting } from "@/lib/format";
 
 interface PageProps {
   searchParams: {
@@ -79,12 +79,13 @@ export default async function DashboardPage({ searchParams }: PageProps) {
     visibleCases = visibleCases.filter((c) => c.roomCode === orCode);
   }
 
-  // Attention queue: real pending actions, most urgent first.
+  // Attention queue: open actions (pending or overdue), most urgent first.
   const attentionItems = await db
     .select({
       id: actionItems.id,
       description: actionItems.description,
       priority: actionItems.priority,
+      status: actionItems.status,
       dueAt: actionItems.dueAt,
       requiresApproval: actionItems.requiresApproval,
       ownerDepartment: actionItems.ownerDepartment,
@@ -96,9 +97,13 @@ export default async function DashboardPage({ searchParams }: PageProps) {
     .innerJoin(surgicalCases, eq(actionItems.surgicalCaseId, surgicalCases.id))
     .innerJoin(patients, eq(surgicalCases.patientId, patients.id))
     .innerJoin(operatingRooms, eq(surgicalCases.operatingRoomId, operatingRooms.id))
-    .where(eq(actionItems.status, "pending"))
+    .where(inArray(actionItems.status, ["pending", "overdue"]))
     .all();
-  attentionItems.sort((a, b) => (a.priority === "high" ? -1 : 1) - (b.priority === "high" ? -1 : 1));
+  // Overdue first, then high priority, then earliest due time.
+  const urgency = (a: (typeof attentionItems)[number]) => (a.status === "overdue" ? 0 : a.priority === "high" ? 1 : 2);
+  attentionItems.sort((a, b) => urgency(a) - urgency(b) || (a.dueAt ?? "").localeCompare(b.dueAt ?? ""));
+
+  const listDate = allCases.length > 0 ? formatLongDate(allCases[0].scheduledStart) : null;
 
   const kpiTiles = [
     { key: "all", label: "Scheduled Cases", value: scheduledCount, href: "/cases", tone: "plain", icon: null },
@@ -112,16 +117,18 @@ export default async function DashboardPage({ searchParams }: PageProps) {
       {/* Page Header */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-end mb-stack_lg gap-stack_md">
         <div>
-          <h1 className="font-display-lg text-display-lg text-on-surface mb-stack_sm">Good morning, {session.user?.name}</h1>
+          <h1 className="font-display-lg text-display-lg text-on-surface mb-stack_sm">{uaeGreeting()}, {session.user?.name}</h1>
           <p className="font-body-lg text-body-lg text-on-surface-variant">
             Tomorrow&apos;s surgical readiness across {scheduledCount} cases in 6 operating rooms.
           </p>
         </div>
         <div className="flex items-center gap-stack_md flex-wrap">
-          <div className="flex items-center gap-2 bg-surface-container-lowest px-4 py-2 border border-outline-variant rounded-lg shadow-sm">
-            <span className="material-symbols-outlined text-primary" aria-hidden="true">calendar_month</span>
-            <span className="font-title-md text-title-md text-on-surface">Monday, 13 July 2026</span>
-          </div>
+          {listDate && (
+            <div className="flex items-center gap-2 bg-surface-container-lowest px-4 py-2 border border-outline-variant rounded-lg shadow-sm">
+              <span className="material-symbols-outlined text-primary" aria-hidden="true">calendar_month</span>
+              <span className="font-title-md text-title-md text-on-surface">{listDate}</span>
+            </div>
+          )}
           <Link
             data-tour="attention-queue-button"
             href="/actions"
@@ -276,20 +283,20 @@ export default async function DashboardPage({ searchParams }: PageProps) {
                   <div
                     key={item.id}
                     className={`bg-surface-container-lowest border border-outline-variant rounded-lg p-stack_md shadow-sm border-l-4 ${
-                      item.priority === "high" ? "border-l-error" : "border-l-secondary"
+                      item.status === "overdue" || item.priority === "high" ? "border-l-error" : "border-l-secondary"
                     }`}
                   >
                     <div className="flex justify-between items-start mb-2 gap-2">
                       <div className="flex items-center gap-2">
-                        <span className={`material-symbols-outlined ${item.priority === "high" ? "text-error" : "text-secondary"}`} style={{ fontSize: "18px" }} aria-hidden="true">
-                          {item.priority === "high" ? "priority_high" : "info"}
+                        <span className={`material-symbols-outlined ${item.status === "overdue" || item.priority === "high" ? "text-error" : "text-secondary"}`} style={{ fontSize: "18px" }} aria-hidden="true">
+                          {item.status === "overdue" ? "event_busy" : item.priority === "high" ? "priority_high" : "info"}
                         </span>
-                        <span className={`font-label-md text-label-md uppercase ${item.priority === "high" ? "text-error" : "text-secondary"}`}>
-                          {item.priority === "high" ? "High priority" : "Medium priority"}
+                        <span className={`font-label-md text-label-md uppercase ${item.status === "overdue" || item.priority === "high" ? "text-error" : "text-secondary"}`}>
+                          {item.status === "overdue" ? "Overdue" : item.priority === "high" ? "High priority" : "Medium priority"}
                         </span>
                       </div>
                       <span className="font-caption text-caption text-on-surface-variant flex items-center gap-1 shrink-0">
-                        <span className="material-symbols-outlined" style={{ fontSize: "14px" }} aria-hidden="true">schedule</span> Due {formatTime(item.dueAt)}
+                        <span className="material-symbols-outlined" style={{ fontSize: "14px" }} aria-hidden="true">schedule</span> {item.status === "overdue" ? "Was due" : "Due"} {formatTime(item.dueAt)}
                       </span>
                     </div>
                     <h3 className="font-title-md text-title-md text-on-surface mb-1">

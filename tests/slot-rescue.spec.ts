@@ -17,9 +17,19 @@ test("slot rescue proposal requires scheduling officer approval", async ({ page 
   await expect(page.getByText("Best Match")).toBeVisible();
   await expect(page.getByText("Original: Endoscopic sinus surgery")).toBeVisible();
 
+  // A second tab loaded before the proposal still shows enabled Propose buttons.
+  const staleTab = await page.context().newPage();
+  await staleTab.goto("/slot-rescue");
+
   await page.getByRole("button", { name: "Propose replacement" }).click();
   await expect(page.getByText(/awaiting scheduling officer approval/i)).toBeVisible();
   await expect(page.getByText(/Status:/).filter({ hasText: "PENDING" })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Propose", exact: true }).first()).toBeDisabled();
+
+  // The server refuses a competing proposal for the same slot.
+  await staleTab.getByRole("button", { name: "Propose", exact: true }).nth(1).click();
+  await expect(staleTab.getByText(/already awaiting scheduling-officer review/i)).toBeVisible();
+  await staleTab.close();
 
   await page.getByRole("button", { name: /Log Out/i }).click();
   await expect(page).toHaveURL(/\/login/);

@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { approveCommunication, returnCommunicationForReview, saveCommunicationDraft } from "@/app/actions";
-import { formatTime } from "@/lib/format";
+import { formatEventTime, formatTime } from "@/lib/format";
 
 interface ActionsClientProps {
   initialActions: any[];
@@ -45,7 +45,7 @@ export default function ActionsClient({ initialActions, comms }: ActionsClientPr
     setFeedback(null);
     const associated = comms.find((c) => c.actionItemId === actionId);
     if (associated) {
-      const content = JSON.parse(associated.draftContent);
+      const content = JSON.parse(associated.status === "sent" && associated.finalContent ? associated.finalContent : associated.draftContent);
       setEnDraft(content.en || "");
       setArDraft(content.ar || "");
     } else {
@@ -179,7 +179,7 @@ export default function ActionsClient({ initialActions, comms }: ActionsClientPr
                       )}
                       <span className={`inline-flex items-center gap-0.5 font-caption text-caption ${overdue ? "text-error font-semibold" : "text-on-surface-variant"}`}>
                         <span className="material-symbols-outlined" style={{ fontSize: "13px" }} aria-hidden="true">{overdue ? "event_busy" : done ? "event_available" : "schedule"}</span>
-                        {done ? `Done ${formatTime(a.completedAt)}` : `${overdue ? "Overdue" : "Due"} ${formatTime(a.dueAt)}`}
+                        {done ? `Done ${formatEventTime(a.completedAt)}` : `${overdue ? "Overdue" : "Due"} ${formatTime(a.dueAt)}`}
                       </span>
                     </div>
                   </button>
@@ -273,7 +273,7 @@ export default function ActionsClient({ initialActions, comms }: ActionsClientPr
                     Save draft
                   </button>
                   <div className="flex gap-2">
-                    <button disabled={loading} onClick={handleReturn}
+                    <button disabled={loading || selectedComms.status === "sent"} onClick={handleReturn}
                       className="px-4 py-2 border border-error text-error rounded-lg font-label-md text-label-md hover:bg-error-container transition-colors disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-error">
                       Return for review
                     </button>

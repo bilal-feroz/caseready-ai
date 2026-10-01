@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { formatDate, formatTime } from "@/lib/format";
+import { formatEventDate, formatEventTime } from "@/lib/format";
 
 interface AuditClientProps {
   events: any[];
@@ -129,8 +129,8 @@ export default function AuditClient({
                     <tr key={evt.id} onClick={() => setSelectedEventId(evt.id)}
                       className="hover:bg-surface-container-low transition-colors cursor-pointer">
                       <td className="py-4 px-4 align-top">
-                        <p className="font-title-md text-title-md text-on-surface tabular-nums">{formatTime(evt.createdAt)}</p>
-                        <p className="font-caption text-caption text-on-surface-variant">{formatDate(evt.createdAt)}</p>
+                        <p className="font-title-md text-title-md text-on-surface tabular-nums">{formatEventTime(evt.createdAt)}</p>
+                        <p className="font-caption text-caption text-on-surface-variant">{formatEventDate(evt.createdAt)}</p>
                       </td>
                       <td className="py-4 px-4 align-top">
                         <div className="flex items-center gap-2">

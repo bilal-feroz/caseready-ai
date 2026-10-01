@@ -26,7 +26,9 @@ export default async function SettingsPage() {
       defaultLanguage={defaultLanguage}
       userRole={session.user?.role || "coordinator"}
       demoMode={isDemoMode()}
-      aiConfigured={Boolean(process.env.GEMINI_API_KEY)}
+      // Drafting is template-only: lib/ai.ts is not wired into any workflow yet, so a key alone
+      // must not make this page claim an AI model is in use.
+      aiConfigured={false}
     />
   );
 }

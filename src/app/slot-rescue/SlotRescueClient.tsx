@@ -42,6 +42,8 @@ export default function SlotRescueClient({ slot, candidates, proposals, userRole
   const canApprove = userRole === "scheduling_officer" || userRole === "administrator";
   const bestCandidate = candidates.find((c) => c.eligible);
   const isRescued = slot.status === "rescued";
+  const hasPendingProposal = proposals.some((p) => p.status === "pending");
+  const proposeLocked = isRescued || hasPendingProposal;
 
   const run = async (fn: () => Promise<any>, text: string) => {
     setLoading(true);
@@ -50,13 +52,13 @@ export default function SlotRescueClient({ slot, candidates, proposals, userRole
       const res = await fn();
       if (res?.success) {
         setFeedback({ text, tone: "info" });
-        router.refresh();
       } else {
-        setFeedback({ text: "The update did not complete.", tone: "error" });
+        setFeedback({ text: res?.error ?? "The update did not complete.", tone: "error" });
       }
+      router.refresh();
     } catch (err: any) {
       console.error(err);
-      setFeedback({ text: err?.message?.includes("ineligible") ? "That candidate is ineligible and cannot be proposed." : "Something went wrong. Please try again.", tone: "error" });
+      setFeedback({ text: "Something went wrong. Please try again.", tone: "error" });
     } finally {
       setLoading(false);
     }
@@ -107,7 +109,7 @@ export default function SlotRescueClient({ slot, candidates, proposals, userRole
             isRescued ? "clinical-teal-bg clinical-teal-text border-teal-200" : "clinical-amber-bg clinical-amber-text border-amber-200"
           }`}>
             <span className="material-symbols-outlined" style={{ fontSize: "16px" }} aria-hidden="true">{isRescued ? "task_alt" : "warning"}</span>
-            Status: {isRescued ? "Rescued" : "Cancellation likely"}
+            Status: {isRescued ? "Rescued" : hasPendingProposal ? "Swap awaiting approval" : "Open — needs a replacement"}
           </span>
         </div>
       </div>
@@ -203,7 +205,7 @@ export default function SlotRescueClient({ slot, candidates, proposals, userRole
               <span className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-primary-container text-inverse-primary font-label-md text-label-md rounded-lg justify-center self-end w-fit mb-1">
                 <span className="material-symbols-outlined" style={{ fontSize: "16px" }} aria-hidden="true">star</span> Best Match
               </span>
-              <button disabled={loading || isRescued} onClick={() => handlePropose(bestCandidate.caseId)}
+              <button disabled={loading || proposeLocked} onClick={() => handlePropose(bestCandidate.caseId)}
                 className="w-full bg-primary text-on-primary font-label-md text-label-md py-2.5 rounded-lg hover:bg-primary-container transition-colors disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-1">
                 Propose replacement
               </button>
@@ -270,7 +272,7 @@ export default function SlotRescueClient({ slot, candidates, proposals, userRole
                       </td>
                       <td className="py-3 px-4">
                         {c.eligible ? (
-                          <button disabled={loading || isRescued} onClick={(e) => { e.stopPropagation(); handlePropose(c.caseId); }}
+                          <button disabled={loading || proposeLocked} onClick={(e) => { e.stopPropagation(); handlePropose(c.caseId); }}
                             className="px-2.5 py-1 text-xs bg-primary text-on-primary rounded hover:bg-primary-container transition-colors disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary">
                             Propose
                           </button>

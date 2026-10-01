@@ -5,14 +5,33 @@ import path from "path";
 import * as schema from "./schema";
 import { SCHEMA_DDL } from "./ddl";
 
-// Database connection.
-// - Production (Vercel): set TURSO_DATABASE_URL + TURSO_AUTH_TOKEN to use hosted Turso/libSQL.
-// - Local dev / tests: falls back to a local SQLite file via libSQL's `file:` URL.
-function resolveUrl(): { url: string; authToken?: string } {
-  const tursoUrl = process.env.TURSO_DATABASE_URL;
-  if (tursoUrl) {
-    return { url: tursoUrl, authToken: process.env.TURSO_AUTH_TOKEN };
+// Find a hosted Turso/libSQL database. TURSO_DATABASE_URL + TURSO_AUTH_TOKEN is the standard
+// pair; the Vercel Marketplace integration may instead add them under a custom prefix
+// (e.g. STORAGE_DATABASE_URL + STORAGE_AUTH_TOKEN), so any *_DATABASE_URL holding a libsql://
+// URL is accepted with its matching *_AUTH_TOKEN.
+function findRemoteDatabase(): { url: string; authToken?: string } | null {
+  if (process.env.TURSO_DATABASE_URL) {
+    return { url: process.env.TURSO_DATABASE_URL, authToken: process.env.TURSO_AUTH_TOKEN };
   }
+  for (const [key, value] of Object.entries(process.env)) {
+    if (key.endsWith("_DATABASE_URL") && value?.startsWith("libsql://")) {
+      const prefix = key.slice(0, -"_DATABASE_URL".length);
+      return { url: value, authToken: process.env[`${prefix}_AUTH_TOKEN`] };
+    }
+  }
+  return null;
+}
+
+const remote = findRemoteDatabase();
+
+/** True when connected to a hosted database rather than a local SQLite file. */
+export const usingRemoteDatabase = remote !== null;
+
+// Database connection.
+// - Production (Vercel): a hosted Turso/libSQL database (see findRemoteDatabase).
+// - Local dev / tests: a local SQLite file via libSQL's `file:` URL.
+function resolveUrl(): { url: string; authToken?: string } {
+  if (remote) return remote;
   const filePath =
     process.env.DATABASE_PATH || (process.env.VERCEL ? path.join("/tmp", "caseready.db") : "./data/caseready.db");
   // Ensure the directory exists for local file-based databases.

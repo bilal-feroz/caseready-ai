@@ -2,6 +2,9 @@ import { NextResponse } from "next/server";
 import { validateStartup } from "@/lib/runtime";
 import { ensureDbReady } from "@/db/provision";
 
+// Must run per request; a static route would freeze the build-time health result.
+export const dynamic = "force-dynamic";
+
 export async function GET() {
   try {
     await ensureDbReady();

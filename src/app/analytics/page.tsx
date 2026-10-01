@@ -41,8 +41,8 @@ export default async function AnalyticsPage() {
   const slots = await db.select().from(operatingRoomSlots);
   const recoveredMinutes = slots.filter((s) => s.status === "rescued").reduce((sum, s) => sum + s.durationMinutes, 0);
 
-  // Blockers by owning department, scaled relative to the largest bucket.
-  const deptCounts = actions.reduce((acc: Record<string, number>, item) => {
+  // Open (pending or overdue) work by owning department, scaled relative to the largest bucket.
+  const deptCounts = actions.filter((a) => a.status !== "completed").reduce((acc: Record<string, number>, item) => {
     acc[item.ownerDepartment] = (acc[item.ownerDepartment] || 0) + 1;
     return acc;
   }, {});
@@ -94,7 +94,7 @@ export default async function AnalyticsPage() {
         <div className="bg-surface-container-lowest border border-outline-variant rounded-xl p-container_padding shadow-sm">
           <h2 className="font-title-md text-title-md text-on-surface font-bold mb-4">Open work by department</h2>
           {commonBlockers.length === 0 ? (
-            <p className="text-on-surface-variant text-center py-6">No actions logged.</p>
+            <p className="text-on-surface-variant text-center py-6">No open actions.</p>
           ) : (
             <div className="space-y-4">
               {commonBlockers.map((b) => (
